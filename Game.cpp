@@ -1,6 +1,6 @@
 
 //
-// Created by 12adi on 11/06/2025.
+// 12adi45@gmail.com
 //
 #include <iostream>
 #include "Game.h"
@@ -19,7 +19,7 @@ void Game::addPlayer(const std::shared_ptr<Player>& player){
   if(gameOver){
     throw std::runtime_error("Cannot add player after game has ended.");
   }
-  players.push_back(player);
+  this->players.push_back(player);
 }
 
 const std::vector<std::string> Game::getActivePlayers() const{
@@ -49,17 +49,8 @@ void Game::nextTurn(){
   do{
     currentTurnIndex = (currentTurnIndex + 1) % players.size();
   } while(!players[currentTurnIndex]->isActive());
-  // בדיקת ניצחון
-  int activeCount = 0;
-  for(const auto& p : players){
-    if(p->isActive()){
-      activeCount++;
-    }
-  }
-  if(activeCount == 1){
-    gameOver = true;
-  }
 
+  checkGameOver();
   // ניקוי חסימות של שחקן נוכחי
   Player& current = getCurrentPlayer();
   current.clearBlocks();
@@ -72,7 +63,7 @@ void Game::nextTurn(){
 }
 
 std::string Game::getWinner() const{
-  if(!gameOver){
+  if(gameOver == false){
     throw std::runtime_error("Game is not over yet.");
   }
   for(const auto& p : players){
@@ -92,13 +83,32 @@ void Game::addToCoinPool(int coin){
 }
 
 bool Game::isGameOver() const{
-  return gameOver;
+  if(players.size() > 1){
+     return false;
+  }
+  return true;
+}
+
+void Game::checkGameOver(){
+  int activeCount = 0;
+  for(const auto& p : players){
+    if(p->isActive()){
+      activeCount++;
+    }
+  }
+  if(activeCount <= 1){
+    gameOver = true;
+  }
 }
 
 // הגדרת פעולות
 void Game::performGather(Player& player){
   if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
+  }
+
+  if (&player != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
   }
 
   if (player.getCoins() >= 10) {
@@ -109,17 +119,21 @@ void Game::performGather(Player& player){
     throw std::runtime_error("Player is blocked from gathering.");
   }
 
-
   if(coinPool < 1){
     throw std::runtime_error("No coins left in the pool.");
   }
-  player.addCoin(1);
+  player.addCoins(1);
   coinPool--;
+  checkGameOver();
 }
 
 void Game::performTax(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
+  }
+
+  if (&player != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
   }
 
   if (player.getCoins() >= 10) {
@@ -145,11 +159,16 @@ void Game::performTax(Player& player){
 
   player.addCoins(baseCoins);
   coinPool -= baseCoins;
+  checkGameOver();
 }
 
 void Game::performBribe(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
+  }
+
+  if (&player != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
   }
 
   if (player.getCoins() >= 10) {
@@ -180,6 +199,7 @@ void Game::performBribe(Player& player){
   else{
     nextTurn(); // אין בונוס או כבר נוצל
   }
+  checkGameOver();
 }
 
 void Game::performArrest(Player& attacker, Player& target){
@@ -187,7 +207,11 @@ void Game::performArrest(Player& attacker, Player& target){
     throw std::runtime_error("The attacker player is Inactive!");
   }
 
-  if (player.getCoins() >= 10) {
+  if (&attacker != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
+  }
+
+  if (attacker.getCoins() >= 10) {
     throw std::runtime_error("The attacker player must perform a coup with 10 or more coins.");
   }
 
@@ -219,6 +243,7 @@ void Game::performArrest(Player& attacker, Player& target){
 
   // עדכון היסטוריית arrest
   arrestHistory[key] = currentTurnIndex;
+  checkGameOver();
 }
 
 void Game::performSanction(Player& attacker, Player& target){
@@ -226,7 +251,11 @@ void Game::performSanction(Player& attacker, Player& target){
     throw std::runtime_error("The attacker player is Inactive!");
   }
 
-  if (player.getCoins() >= 10) {
+  if (&attacker != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
+  }
+
+  if (attacker.getCoins() >= 10) {
     throw std::runtime_error("The attacker player must perform a coup with 10 or more coins.");
   }
 
@@ -249,6 +278,7 @@ void Game::performSanction(Player& attacker, Player& target){
 
   // הפעלת תגובת התפקיד (של הנפגע)
   target.getRole()->onSanction(target, attacker, *this);
+  checkGameOver();
 }
 
 void Game::performCoup(Player& attacker, Player& target){
@@ -256,8 +286,8 @@ void Game::performCoup(Player& attacker, Player& target){
     throw std::runtime_error("The attacker player is Inactive!");
   }
 
-  if (player.getCoins() >= 10) {
-    throw std::runtime_error("The attacker player must perform a coup with 10 or more coins.");
+  if (&attacker != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
   }
 
   if(!target.isActive()){
@@ -281,4 +311,18 @@ void Game::performCoup(Player& attacker, Player& target){
   if(target.isActive()){
     target.deactivate();
   }
+  checkGameOver();
+}
+
+void Game::performInvest(Player& player) {
+  if(!player.isActive()){
+    throw std::runtime_error("Dear Baron you are Inactive - yours game is over!");
+  }
+
+  if (&player != &getCurrentPlayer()) {
+    throw std::runtime_error("Not your turn.");
+  }
+
+    player.getRole()->onInvest(player, *this);
+    checkGameOver();
 }

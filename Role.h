@@ -1,5 +1,5 @@
 //
-// Created by 12adi on 11/06/2025.
+// 12adi45@gmail.com
 //
 
 #ifndef ROLE_H
@@ -15,19 +15,19 @@ class Role {
 
     virtual std::string getName() const = 0;
     // תוספת או שינוי בתחילת תור (כמו מטבע נוסף למרצ'נט)
-    virtual void onTurnStart(Player& player, Game& game){}
+    virtual void onTurnStart(Player&, Game&){}
     // השפעה על tax – למשל Governor
-    virtual void onTax(Player& player, Player& self, Game& game){}
+    virtual void onTax(Player&, Player&, Game&){}
     // תגובה ל־bribe – למשל Judge
-    virtual void onBribe(Player& actor, Player& self, Game& game){}
+    virtual void onBribe(Player&, Player&, Game&){}
     // תגובה ל־arrest – למשל General או Merchant
-    virtual void onArrest(Player& self, Player& attacker, Game& game){}
-    // תגובה ל־sanction – למשל Baron או Judge
-    virtual void onSanction(Player& player, Player& attacker, Game& game){}
+    virtual void onArrest(Player&, Player&, Game&){}
+     // תגובה ל־sanction – למשל Baron או Judge
+    virtual void onSanction(Player&, Player&, Game&){}
     // תגובה ל־coup – למשל General
-    virtual void onCoup(Player& target, Player& attacker, Game& game){}
+    virtual void onCoup(Player&, Player&, Game&){}
 
-
+    virtual void onInvest(Player&, Game&){}
 };
 
 #endif //ROLE_H

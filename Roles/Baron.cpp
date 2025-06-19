@@ -13,11 +13,11 @@ Baron::~Baron(){}
 std::string Baron::getName() const {
     return "Baron";
 }
-void Baron::onSanction(Player& player, Player& attacker, Game& game){
+void Baron::onSanction(Player& player, Player&, Game&){
   player.addCoins(1);
 }
 
-void Baron::invest(Player& self, Game& game){
+void Baron::onInvest(Player& self, Game& game){
     if(!self.isActive()){
         throw std::runtime_error("Dear baron your activity has been blocked \n Your game over! Bye - Bye");
     }

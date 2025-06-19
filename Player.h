@@ -1,8 +1,9 @@
 //
-// Created by 12adi on 11/06/2025.
+// 12adi45@gmail.com
 //
 
-#pragma once
+#ifndef PLAYER_H
+#define PLAYER_H
 
 #include <string>
 #include <memory>
@@ -28,7 +29,7 @@ class Player{
 
       // גישה למידע
       const std::string& getName() const;
-      int getCoin() const;
+      int getCoins() const;
       Role* getRole() const;
       bool isActive() const;
 

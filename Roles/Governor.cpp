@@ -3,8 +3,8 @@
 //
 #include <iostream>
 #include "Governor.h"
-#include "Player.h"
-#include "Game.h"
+#include "../Player.h"
+#include "../Game.h"
 
 Governor::Governor(){}
 Governor::~Governor(){}

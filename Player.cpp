@@ -1,5 +1,5 @@
 //
-// Created by 12adi on 11/06/2025.
+// 12adi45@gmail.com
 //
 
 #include "Player.h"
@@ -7,7 +7,12 @@
 #include <stdexcept>
 
 Player::Player(const std::string& name, std::unique_ptr<Role> role)
-    : name(name), coins(0), role(std::move(role)), active(true) {}
+    : name(name), coins(0), active(true) {
+  if(!role) {
+    throw std::invalid_argument("Role cannot be null");
+  }
+  this->role = std::move(role);
+}
 
 Player::~Player() {}
 
@@ -30,7 +35,7 @@ bool Player::isActive() const {
 // זור לזה -אני לא בטוחה בבדיקה שעשיתי!!
 void Player::addCoins(int amount) {
   if(amount < 0) {
-    throw std::invalide_argument("Cannot add negative coins");
+    throw std::invalid_argument("Cannot add negative coins");
   }
   coins += amount;
 }

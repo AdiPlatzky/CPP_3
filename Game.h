@@ -1,5 +1,5 @@
 //
-// Created by 12adi on 11/06/2025.
+// 12adi45@gmail.com
 //
 
 #ifndef GAME_H
@@ -36,6 +36,7 @@ class Game {
       void performArrest(Player& attacker, Player& terget);
       void performSanction(Player& attacker, Player& target);
       void performCoup(Player& attacker, Player& target);
+      void performInvest(Player& player);
 
       // זכייה
       std::string getWinner() const;
@@ -44,6 +45,8 @@ class Game {
       int& getCoinPool();  // קופה מרכזית
       void addToCoinPool(int coinPool); // להוסיף לקופה המרכזית
       bool isGameOver() const;
+      void checkGameOver();
+
 
 };
 

@@ -19,7 +19,7 @@ class Baron : public Role {
 
     std::string getName() const override;
     void onSanction(Player& player, Player& attacker, Game& game)override;
-    void invest(Player& self, Game& game);
+    void onInvest(Player& self, Game& game) override;
 };
 
 
