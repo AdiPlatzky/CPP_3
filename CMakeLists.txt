@@ -3,9 +3,9 @@ project(CoupGame)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
-# קבצים משותפים (למשחק ולבדיקות)
+# קבצי המקור
 set(SOURCE_COMMON
         Game.cpp
         Player.cpp
@@ -14,38 +14,28 @@ set(SOURCE_COMMON
         Roles/Spy.cpp
         Roles/General.cpp
         Roles/Judge.cpp
-        #CreateRole.cpp
         Roles/Merchant.cpp
-        #MainMenu.cpp
-        #PlayerRegisterScreen.cpp
-        #ScreenType.cpp
-        #PlayerTurnScreen.cpp
-        #SelectPlayerScreen.cpp
-        #ScreenManager.cpp
-        #ActionTransitionScreen.cpp
-        #ScreenSwitchingFailed.cpp
-        #BlockPromptScreen.cpp
-        #AndGame.cpp
+        GUI/MainWindow.cpp
+        GUI/MainWindow.h
 )
 
-# קבצים לבדיקות (לבדיקה בלבד)
+# קבצי בדיקות
 set(TEST_SOURCES
-        #test_game.cpp
-        #doctest.h
-        #test_rol.cpp
-        #test_player.cpp
-        #test_spy.cpp
-        #test_merchant.cpp
-        #test_judge.cpp
-        #test_governor.cpp
-        #test_general.cpp
-        #test_creatRole.cpp
+        #Tests/doctest.h
+        Tests/Baron_test.cpp
+        Tests/Game_test.cpp
+        Tests/General_test.cpp
+        Tests/Governor_test.cpp
+        Tests/Judge_test.cpp
+        Tests/Merchant_test.cpp
+        Tests/Player_test.cpp
+        Tests/Spy_test.cpp
 )
 
-# בניית ה-target של המשחק הראשי
-add_executable(CoupGame main.cpp ${SOURCE_COMMON})
-target_link_libraries(CoupGame sfml-graphics sfml-window sfml-system)
+# בניית המשחק הראשי
+add_executable(CoupGame GUI/main.cpp ${SOURCE_COMMON})
+target_link_libraries(CoupGame Qt5::Widgets)
 
-# בניית ה-target של הבדיקות
-add_executable(TestGame test_game.cpp ${SOURCE_COMMON} ${TEST_SOURCES})
-target_link_libraries(TestGame sfml-graphics sfml-window sfml-system)
+# בניית הבדיקות (אם רוצים)
+add_executable(TestGame ${TEST_SOURCES} ${SOURCE_COMMON})
+target_link_libraries(TestGame Qt5::Widgets)

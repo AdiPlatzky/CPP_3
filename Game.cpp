@@ -86,7 +86,8 @@ bool Game::isGameOver() const{
   if(players.size() > 1){
      return false;
   }
-  return true;
+  return true
+      ;
 }
 
 void Game::checkGameOver(){
