@@ -10,6 +10,10 @@
 General::General(){}
 General::~General(){}
 
+std::string General::getName() const {
+  return "General";
+}
+
 void General::onArrest(Player& self, Player& attacker, Game&){
   if(attacker.getCoins() > 0){
     attacker.removeCoins(1);

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_AUTOMOC ON)
 
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 # קבצי המקור
 set(SOURCE_COMMON
@@ -17,8 +17,14 @@ set(SOURCE_COMMON
         Roles/General.cpp
         Roles/Judge.cpp
         Roles/Merchant.cpp
+        Roles/RoleFactory.cpp
+        Roles/RoleFactory.h
         GUI/MainWindow.cpp
         GUI/MainWindow.h
+        GUI/GameBoardWindow.cpp
+        GUI/GameBoardWindow.h
+        GUI/InstructionsWindow.cpp
+        GUI/InstructionsWindow.h
 )
 
 # קבצי בדיקות

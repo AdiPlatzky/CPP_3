@@ -22,6 +22,10 @@ void Game::addPlayer(const std::shared_ptr<Player>& player){
   this->players.push_back(player);
 }
 
+const std::vector<std::shared_ptr<Player>>& Game::getPlayer() const {
+  return players;
+}
+
 const std::vector<std::string> Game::getActivePlayers() const{
   std::vector<std::string> names;
   for(const auto& p : players){
@@ -103,7 +107,7 @@ void Game::checkGameOver(){
 }
 
 // הגדרת פעולות
-void Game::performGather(Player& player){
+std::string Game::performGather(Player& player){
   if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
   }
@@ -126,9 +130,10 @@ void Game::performGather(Player& player){
   player.addCoins(1);
   coinPool--;
   checkGameOver();
+  return player.getName() + "עוד יום עוד אגורה";
 }
 
-void Game::performTax(Player& player){
+std::string Game::performTax(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
   }
@@ -161,9 +166,11 @@ void Game::performTax(Player& player){
   player.addCoins(baseCoins);
   coinPool -= baseCoins;
   checkGameOver();
+  return player.getName() + "עוד יום עוד 2 אגורות";
+
 }
 
-void Game::performBribe(Player& player){
+std::string Game::performBribe(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
   }
@@ -201,9 +208,11 @@ void Game::performBribe(Player& player){
     nextTurn(); // אין בונוס או כבר נוצל
   }
   checkGameOver();
+  return player.getName() + "איזה יופי קיבלת בשוחד עוד תור";
+
 }
 
-void Game::performArrest(Player& attacker, Player& target){
+std::string Game::performArrest(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("The attacker player is Inactive!");
   }
@@ -245,9 +254,11 @@ void Game::performArrest(Player& attacker, Player& target){
   // עדכון היסטוריית arrest
   arrestHistory[key] = currentTurnIndex;
   checkGameOver();
+  return attacker.getName() + "שיחקת אותה קיבלת מטבע מ - " + target.getName();
+
 }
 
-void Game::performSanction(Player& attacker, Player& target){
+std::string Game::performSanction(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("The attacker player is Inactive!");
   }
@@ -280,9 +291,10 @@ void Game::performSanction(Player& attacker, Player& target){
   // הפעלת תגובת התפקיד (של הנפגע)
   target.getRole()->onSanction(target, attacker, *this);
   checkGameOver();
+  return attacker.getName() + "הטלת חרם על: " + target.getName();
 }
 
-void Game::performCoup(Player& attacker, Player& target){
+std::string Game::performCoup(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("The attacker player is Inactive!");
   }
@@ -313,9 +325,11 @@ void Game::performCoup(Player& attacker, Player& target){
     target.deactivate();
   }
   checkGameOver();
+  return attacker.getName() + "סוף סוף! אתה מתקרב לניצחון! הדחת את: " + target.getName();
+
 }
 
-void Game::performInvest(Player& player) {
+std::string Game::performInvest(Player& player) {
   if(!player.isActive()){
     throw std::runtime_error("Dear Baron you are Inactive - yours game is over!");
   }
@@ -324,6 +338,7 @@ void Game::performInvest(Player& player) {
     throw std::runtime_error("Not your turn.");
   }
 
-    player.getRole()->onInvest(player, *this);
-    checkGameOver();
+  player.getRole()->onInvest(player, *this);
+  checkGameOver();
+  return player.getName() + "השקעה טובה ברון";
 }

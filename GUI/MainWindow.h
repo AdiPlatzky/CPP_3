@@ -1,11 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include <QWidget>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include "GameBoardWindow.h"
 
-class MainWindow : public QMainWindow {
+class QPushButton;
+class QVBoxLayout;
+
+class MainWindow : public QWidget {
     Q_OBJECT
 
 public:
@@ -13,12 +17,13 @@ public:
     ~MainWindow();
 
 private slots:
-    void startNewGame();
-    void showInstructions();
+    void openNewGame();
+    void openInstructions();
 
 private:
     QPushButton *newGameButton;
     QPushButton *instructionsButton;
+    QVBoxLayout *layout;
 };
 
 #endif // MAINWINDOW_H

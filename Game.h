@@ -23,6 +23,7 @@ class Game {
       ~Game();
       // ניהול שחקנים
       void addPlayer(const std::shared_ptr<Player>& player);
+      const std::vector<std::shared_ptr<Player>>& getPlayer() const;
       const std::vector<std::string> getActivePlayers() const;
 
       // תור
@@ -30,13 +31,13 @@ class Game {
       void nextTurn();
 
       // פעולות
-      void performGather(Player& player);
-      void performTax(Player& player);
-      void performBribe(Player& player);
-      void performArrest(Player& attacker, Player& terget);
-      void performSanction(Player& attacker, Player& target);
-      void performCoup(Player& attacker, Player& target);
-      void performInvest(Player& player);
+      std::string performGather(Player& player);
+      std::string performTax(Player& player);
+      std::string performBribe(Player& player);
+      std::string performArrest(Player& attacker, Player& terget);
+      std::string performSanction(Player& attacker, Player& target);
+      std::string performCoup(Player& attacker, Player& target);
+      std::string performInvest(Player& player);
 
       // זכייה
       std::string getWinner() const;

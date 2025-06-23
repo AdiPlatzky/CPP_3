@@ -17,6 +17,8 @@ class General : public Role {
   public:
     General();
     ~General();
+
+  std::string getName() const override;
   void onArrest(Player& self, Player& attacker, Game& game) override;
   void onCoup(Player& target, Player& attacker, Game& game) override;
 
