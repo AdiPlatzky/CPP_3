@@ -19,15 +19,15 @@ void Baron::onSanction(Player& player, Player&, Game&){
 
 void Baron::onInvest(Player& self, Game& game){
     if(!self.isActive()){
-        throw std::runtime_error("Dear baron your activity has been blocked \n Your game over! Bye - Bye");
+        std::cout <<"Dear baron: Your activity has been blocked \n Your game over! Bye - Bye";
     }
 
     if(self.getCoins() < 3){
-      throw std::runtime_error("Dear baron you do not enough coins to invest.");
+        std::cout << "Dear baron you do not enough coins to invest.";
     }
 
     if (self.getCoins() >= 10) {
-        throw std::runtime_error("Dear baron you have 10 or more coins.\n Must perform a coup before... See you later");
+        std::cout << "Dear baron you have 10 or more coins.\n Must perform a coup before... See you later";
     }
 
     if(game.getCoinPool() < 3){

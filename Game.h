@@ -5,6 +5,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <cmath>
 #include <vector>
 #include <memory>
 #include <string>
@@ -15,7 +16,7 @@ class Game {
   private:
     std::vector<std::shared_ptr<Player>> players;
     int currentTurnIndex = 0;
-    int coinPool = 50;
+    int coinPool = INFINITY;
     bool gameOver = false;
 
     public:

@@ -9,6 +9,12 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QGridLayout>
+#include <QPixmap>
+#include <QIcon>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QMouseEvent>
+
 
 GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
 {
@@ -30,14 +36,19 @@ GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
     QFont font = turnLabel->font();
     font.setPointSize(18);
     turnLabel->setFont(font);
-    mainLayout->addWidget(turnLabel);
+    mainLayout->addStretch(1);
+    mainLayout->addWidget(turnLabel, 0, Qt::AlignHCenter);
+    mainLayout->addStretch(1);
+
 
     coinLabel = new QLabel(this);
     coinLabel->setAlignment(Qt::AlignCenter);
     QFont cFont = coinLabel->font();
     font.setPointSize(14);
-    turnLabel->setFont(cFont);
-    mainLayout->addWidget(coinLabel);
+    coinLabel->setFont(cFont);
+    mainLayout->addStretch(1);
+    //mainLayout->addWidget(coinLabel, 0, Qt::AlignHCenter);
+    mainLayout->addStretch(1);
 
     actionResultLabel = new QLabel(this);
     actionResultLabel->setAlignment(Qt::AlignCenter);
@@ -107,7 +118,8 @@ void GameBoardWindow::setupPlayers() {
         QString label = QString::fromStdString(name + " (" + role + ")");
 
         QLabel *player = new QLabel(label, this);
-        player->setStyleSheet("border: 2px solid black; padding: 10px; background: #DDEEFF;");
+        player->setStyleSheet("border: 2px solid black; padding: 15px; background: #DDEEFF;" "font-size: 10px;");
+        player->setMinimumSize(120, 80);
         player->setAlignment(Qt::AlignCenter);
         playerLabels.append(player);
         playerLayout->addWidget(player);
@@ -142,9 +154,21 @@ void GameBoardWindow::setupActions() {
     connect(GatherButton, &QPushButton::clicked, this, &GameBoardWindow::handleGather);
     connect(TaxButton, &QPushButton::clicked, this, &GameBoardWindow::handleTax);
     connect(BribeButton, &QPushButton::clicked, this, &GameBoardWindow::handleBribe);
-    connect(ArrestButton, &QPushButton::clicked, this, &GameBoardWindow::handleArrest);
-    connect(SanctionButton, &QPushButton::clicked, this, &GameBoardWindow::handleSanction);
-    connect(CoupButton, &QPushButton::clicked, this, &GameBoardWindow::handleCoup);
+    connect(ArrestButton, &QPushButton::clicked, [=]() {
+    requestTargetForAction([this](Player &attacker, Player &target) {
+        return game->performArrest(attacker, target);
+    });
+});
+    connect(SanctionButton, &QPushButton::clicked, [=]() {
+    requestTargetForAction([this](Player &attacker, Player &target) {
+        return game->performSanction(attacker, target);
+    });
+});
+    connect(CoupButton, &QPushButton::clicked,  [=]() {
+    requestTargetForAction([this](Player &attacker, Player &target) {
+        return game->performCoup(attacker, target);
+    });
+});
     connect(InvestButton, &QPushButton::clicked, this, &GameBoardWindow::handleInvest);
 
 
@@ -168,10 +192,17 @@ void GameBoardWindow::setupActions() {
 
 void GameBoardWindow::updateTurnLabel() {
     turnLabel->setText("Player turn: " + QString::fromStdString(game->getCurrentPlayer().getName()));
-    animateTurnLabel();
+    // animateTurnLabel();
 }
 void GameBoardWindow::updateCoinLabel() {
-    coinLabel->setText("Your coins: " + QString::number(game->getCurrentPlayer().getCoins()));
+    const auto& playersList = game->getPlayer();
+    for (int i = 0; i < playersList.size(); ++i) {
+        auto& player = playersList[i];
+        QString name = QString::fromStdString(player->getName());
+        QString role = QString::fromStdString(player->getRole()->getName());
+        QString coins = QString::number(player->getCoins());
+        playerLabels[i]->setText(name + " (" + role + ") - 💰" + coins);
+    }
 }
 // void GameBoardWindow::handleAction() {
 //     static int turn = 0;
@@ -190,6 +221,53 @@ void GameBoardWindow::animateTurnLabel() {
     animation->setEasingCurve(QEasingCurve::OutBounce);
     animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
+
+void GameBoardWindow::resetPlayerHighlights() {
+    awaitingTargetSelection = false;
+    pendingActionFunction = nullptr;
+
+    for (auto label : playerLabels) {
+        label->setStyleSheet("border: 2px solid black; padding: 10px; background: #DDEEFF;");
+        label->removeEventFilter(this);
+    }
+}
+
+
+bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
+    if (awaitingTargetSelection && event->type() == QEvent::MouseButtonPress) {
+        for (int i = 0; i < playerLabels.size(); ++i) {
+            if (watched == playerLabels[i]) {
+                try {
+                    Player& attacker = game->getCurrentPlayer();
+                    Player& target = *game->getPlayer()[i];
+                    QString result = QString::fromStdString(pendingActionFunction(attacker, target));
+                    actionResultLabel->setText(result);
+                    game->nextTurn();
+                    updateTurnLabel();
+                    updateCoinLabel();
+                } catch (const std::exception& e) {
+                    QMessageBox::warning(this, "שגיאה", e.what());
+                }
+                resetPlayerHighlights();
+                return true;
+            }
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+void GameBoardWindow::requestTargetForAction(std::function<std::string(Player &, Player &)> actionFunc) {
+    awaitingTargetSelection = true;
+    pendingActionFunction = actionFunc;
+
+    for (auto label : playerLabels) {
+        label->setStyleSheet("background: yellow; border: 2px solid red; padding: 10px;");
+        label->installEventFilter(this);
+    }
+
+    actionResultLabel->setText("בחר שחקן לביצוע הפעולה");
+}
+
 
 // void GameBoardWindow::handleIncome() {
 //     Player &attacker = game->getCurrentPlayer();
@@ -235,42 +313,61 @@ void GameBoardWindow::handleBribe() {
     Player &attacker = game->getCurrentPlayer();
     QString result = QString::fromStdString(game->performBribe(attacker));
     actionResultLabel->setText(result);
-    game->nextTurn();
+
+    if (!attacker.hasBonusAction()) {
+        game->nextTurn();
+    }
     updateTurnLabel();
     updateCoinLabel();
+
 }
 
-void GameBoardWindow::handleArrest() {
-    Player &attacker = game->getCurrentPlayer();
-    Player &target = game->getCurrentPlayer();
-
-    QString result = QString::fromStdString(game->performArrest(attacker, target));
-    actionResultLabel->setText(result);
-    game->nextTurn();
-    updateTurnLabel();
-    updateCoinLabel();
-}
-
-void GameBoardWindow::handleSanction() {
-    Player &attacker = game->getCurrentPlayer();
-    Player &target = game->getCurrentPlayer();
-
-    QString result = QString::fromStdString(game->performSanction(attacker, target));
-    actionResultLabel->setText(result);
-    game->nextTurn();
-    updateTurnLabel();
-    updateCoinLabel();
-}
-void GameBoardWindow::handleCoup() {
-    Player &attacker = game->getCurrentPlayer();
-    Player &target = game->getCurrentPlayer();
-
-    QString result = QString::fromStdString(game->performCoup(attacker,target));
-    actionResultLabel->setText(result);
-    game->nextTurn();
-    updateTurnLabel();
-    updateCoinLabel();
-}
+// void GameBoardWindow::handleArrest() {
+//     Player &attacker = game->getCurrentPlayer();
+//     Player &target = game->getCurrentPlayer();
+//
+//     QString result = QString::fromStdString(game->performArrest(attacker, target));
+//     actionResultLabel->setText(result);
+//     game->nextTurn();
+//     updateTurnLabel();
+//     updateCoinLabel();
+// }
+//
+// void GameBoardWindow::handleSanction() {
+//     Player &attacker = game->getCurrentPlayer();
+//     Player &target = game->getCurrentPlayer();
+//
+//     QString result = QString::fromStdString(game->performSanction(attacker, target));
+//     actionResultLabel->setText(result);
+//     game->nextTurn();
+//     updateTurnLabel();
+//     updateCoinLabel();
+// }
+// void GameBoardWindow::handleCoup() {
+//     Player &attacker = game->getCurrentPlayer();
+//     if (attacker.getCoins() < 7) {
+//         QMessageBox::warning(this, "You have no coins to make coup (you need 7 or more coins)!", "ERROR:Coins");
+//         return;
+//     }
+//     actionResultLabel->setText("Select the player you want to eliminate");
+//     awaitingTarget = true;
+//
+//     for (int i = 0; i < playerLabels.size(); i++) {
+//         Player &target = *game->getPlayer()[i];
+//
+//         if (!target.isActive() || &target == &attacker) {
+//             continue;
+//         }
+//         playerLabels[i]->setStyleSheet("background-color: #FFCCCC; border: 3px solid red;");
+//         playerLabels[i]->installEventFilter(this);
+//     }
+//
+//     //QString result = QString::fromStdString(game->performCoup(attacker,target));
+//     //actionResultLabel->setText(result);
+//     game->nextTurn();
+//     updateTurnLabel();
+//     updateCoinLabel();
+// }
 
 void GameBoardWindow::handleInvest() {
     Player &attacker = game->getCurrentPlayer();

@@ -20,7 +20,7 @@ void Judge::onBribe(Player& actor, Player&, Game&){
 
 void Judge::onSanction(Player& actor, Player&, Game& game){
   if(actor.getCoins() < 1){
-    throw std::runtime_error("Attacker cannot pay the Judge penalty");
+    std::cout << "Attacker cannot pay the Judge penalty";
   }
   actor.removeCoins(1);
   game.addToCoinPool(1);

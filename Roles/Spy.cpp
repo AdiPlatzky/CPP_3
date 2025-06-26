@@ -16,5 +16,5 @@ std::string Spy::getName() const {
 
 void Spy::onArrest(Player&, Player& attacker, Game&){
   std::cout << "Spy sees " << attacker.getName() << " has " << attacker.getCoins() << " coins\n";
-  attacker.blockAction("arrest");
+  attacker.blockAction("arrest",1);
 }

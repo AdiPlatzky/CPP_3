@@ -90,8 +90,7 @@ bool Game::isGameOver() const{
   if(players.size() > 1){
      return false;
   }
-  return true
-      ;
+  return true;
 }
 
 void Game::checkGameOver(){
@@ -113,15 +112,15 @@ std::string Game::performGather(Player& player){
   }
 
   if (&player != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if (player.getCoins() >= 10) {
-    throw std::runtime_error("Player must perform a coup with 10 or more coins.");
+    return "You must perform coup because you have a 10 or more coins...remember?";
   }
 
   if(player.isBlocked("gather")){
-    throw std::runtime_error("Player is blocked from gathering.");
+    return player.getName() + " לא יכול לבצע איסוף – הוטל עליו חרם!";
   }
 
   if(coinPool < 1){
@@ -130,7 +129,7 @@ std::string Game::performGather(Player& player){
   player.addCoins(1);
   coinPool--;
   checkGameOver();
-  return player.getName() + "עוד יום עוד אגורה";
+  return player.getName() + " עוד יום עוד אגורה";
 }
 
 std::string Game::performTax(Player& player){
@@ -139,15 +138,15 @@ std::string Game::performTax(Player& player){
   }
 
   if (&player != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if (player.getCoins() >= 10) {
-    throw std::runtime_error("Player must perform a coup with 10 or more coins.");
+    return "You must perform coup because you have a 10 or more coins...remember?";
   }
 
   if(player.isBlocked("tax")){
-    throw std::runtime_error("Player is blocked from performing tax.");
+    return "You  are blocked from takes taxes.";
   }
 
   for(auto& p : players){
@@ -160,13 +159,13 @@ std::string Game::performTax(Player& player){
 
   int baseCoins = 2;
   if(coinPool < baseCoins){
-    throw std::runtime_error("Not enuogh coins in the pool.");
+    throw std::runtime_error("Not enough coins in the pool.");
   }
 
   player.addCoins(baseCoins);
   coinPool -= baseCoins;
   checkGameOver();
-  return player.getName() + "עוד יום עוד 2 אגורות";
+  return player.getName() + " עוד יום עוד 2 אגורות ";
 
 }
 
@@ -176,15 +175,15 @@ std::string Game::performBribe(Player& player){
   }
 
   if (&player != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if (player.getCoins() >= 10) {
-    throw std::runtime_error("Player must perform a coup with 10 or more coins.");
+    return "You must perform coup because you have a 10 or more coins...remember?";
   }
 
   if(player.getCoins() < 4){
-    throw std::runtime_error("Not enough coins to bribe.");
+    return "You don't have enough coins to bribe.";
   }
   player.removeCoins(4);
   coinPool += 4;
@@ -200,16 +199,15 @@ std::string Game::performBribe(Player& player){
     player.setBonusAction(true);  // זכאי לבונוס רק אם לא נחסם
   }
 
-  if(player.hasBonusAction()){
-    // תור נוסף מותר
-    player.consumeBonusAction(); // מנצל אותו
-  }
-  else{
-    nextTurn(); // אין בונוס או כבר נוצל
-  }
+  // if(player.hasBonusAction()){
+  //   // תור נוסף מותר
+  //   player.consumeBonusAction(); // מנצל אותו
+  // }
+  // else{
+  //   nextTurn(); // אין בונוס או כבר נוצל
+  // }
   checkGameOver();
   return player.getName() + "איזה יופי קיבלת בשוחד עוד תור";
-
 }
 
 std::string Game::performArrest(Player& attacker, Player& target){
@@ -218,32 +216,32 @@ std::string Game::performArrest(Player& attacker, Player& target){
   }
 
   if (&attacker != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if (attacker.getCoins() >= 10) {
-    throw std::runtime_error("The attacker player must perform a coup with 10 or more coins.");
+    return "You must perform coup because you have a 10 or more coins...remember?";
   }
 
   if(!target.isActive()){
-    throw std::runtime_error("The target player is inactive! \n Try another player from the game.");
+    return "The target player is inactive! \n Try another player from the game.";
   }
 
   if(attacker.isBlocked("arrest")){
-    throw std::runtime_error("This player's is blocked this turn.");
+    return "You are blocked in this turn, try other active";
   }
 
-  if(&attacker == &target){
-    throw std::runtime_error("Seriously?! Were you planning on arresting yourself? Its not possible to make sanction yourself in this game...");
+  if(attacker.getName() == target.getName() && &attacker == &target){
+    return "Seriously?! Were you planning on arresting yourself? Its not possible to make sanction yourself in this game...";
   }
   // בדיקה אם arrest חוזר על עצמו
   auto key = std::make_pair(attacker.getName(), target.getName());
   if(arrestHistory[key] == currentTurnIndex){
-    throw std::runtime_error("Cannot arrest same player twice in a row.");
+    return "Cannot arrest same player twice in a row.";
   }
 
   if(target.getCoins() == 0){
-    throw std::runtime_error("Target has no coins.");
+    return "Target has no coins.";
   }
   // לוקח ממנו מטבע
   target.removeCoins(1);
@@ -255,7 +253,6 @@ std::string Game::performArrest(Player& attacker, Player& target){
   arrestHistory[key] = currentTurnIndex;
   checkGameOver();
   return attacker.getName() + "שיחקת אותה קיבלת מטבע מ - " + target.getName();
-
 }
 
 std::string Game::performSanction(Player& attacker, Player& target){
@@ -264,29 +261,29 @@ std::string Game::performSanction(Player& attacker, Player& target){
   }
 
   if (&attacker != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if (attacker.getCoins() >= 10) {
-    throw std::runtime_error("The attacker player must perform a coup with 10 or more coins.");
+    return "You must perform coup because you have a 10 or more coins...remember?";
   }
 
   if(!target.isActive()){
-    throw std::runtime_error("The target player is inactive! \n Try another player from the game.");
+    return "The target player is inactive! \n Try another player from the game.";
   }
 
-  if(&attacker == &target){
-    throw std::runtime_error("Seriously?! Were you planning on attacking yourself? Its not possible to make sanction yourself in this game...");
+  if(attacker.getName() == target.getName() && &attacker == &target){
+    return "Seriously?! Were you planning on attacking yourself? Its not possible to make sanction yourself in this game...";
   }
   if(attacker.getCoins() < 3){
-    throw std::runtime_error("Not enough coins to perform sanction.");
+    return "You don't have enough coins to perform sanction.";
   }
   attacker.removeCoins(3);
   coinPool += 3;
 
   // חסימה של פעולות כלכליות
-  target.blockAction("gather");
-  target.blockAction("tax");
+  target.blockAction("gather",2);
+  target.blockAction("tax",2);
 
   // הפעלת תגובת התפקיד (של הנפגע)
   target.getRole()->onSanction(target, attacker, *this);
@@ -300,19 +297,19 @@ std::string Game::performCoup(Player& attacker, Player& target){
   }
 
   if (&attacker != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "It's not your turn!";
   }
 
   if(!target.isActive()){
-    throw std::runtime_error("The target player is inactive! \n Try another player from the game.");
+    return "The target player is inactive! \n Try another player from the game.";
   }
 
-  if(&attacker == &target){
-    throw std::runtime_error("Seriously?! Were you planning on kill yourself? Dont worry, It's not possible in this game...you are protected!");
+  if(attacker.getName() == target.getName() && &attacker == &target){
+    return "Seriously?! Were you planning on kill yourself? Dont worry, It's not possible in this game...you are protected!";
   }
 
   if(attacker.getCoins() < 7){
-    throw std::runtime_error("Not enough coins to perform coup.");
+    return "Yuo don't have enough coins to perform coup.";
   }
   attacker.removeCoins(7);
   coinPool += 7;
@@ -325,8 +322,7 @@ std::string Game::performCoup(Player& attacker, Player& target){
     target.deactivate();
   }
   checkGameOver();
-  return attacker.getName() + "סוף סוף! אתה מתקרב לניצחון! הדחת את: " + target.getName();
-
+  return attacker.getName() + "You killed: " + target.getName();
 }
 
 std::string Game::performInvest(Player& player) {
@@ -335,7 +331,7 @@ std::string Game::performInvest(Player& player) {
   }
 
   if (&player != &getCurrentPlayer()) {
-    throw std::runtime_error("Not your turn.");
+    return "Dear Baron: It's not your turn!";
   }
 
   player.getRole()->onInvest(player, *this);

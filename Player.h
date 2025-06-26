@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <set>
+#include <unordered_map>
 
 class Role;
 class Game;
@@ -18,7 +19,7 @@ class Player{
     int coins;
     std::unique_ptr<Role> role;
     bool active;
-    std::set<std::string> blockedActions;
+    std::unordered_map<std::string, int> blockedActions;
     bool bonusActionPending = false;
     bool bonusActionUsed = false;
 
@@ -39,7 +40,7 @@ class Player{
      void deactivate(); // הדחה מהמשחק
 
     // פעולות חסימה – תומך בדרישות של "אפשר לחסום פעולה בתור הבא"
-    void blockAction(const std::string& actionName);
+    void blockAction(const std::string& actionName, int turns);
     bool isBlocked(const std::string& actionName) const;
     void clearBlocks(); //מתאפס בתחילת תור
 

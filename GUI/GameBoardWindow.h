@@ -32,10 +32,10 @@ private:
     QVBoxLayout *mainLayout;
     QHBoxLayout *playerLayout;
     QGridLayout *actionLayout;
-    // QHBoxLayout *cardLayout;
+    QHBoxLayout *cardLayout;
 
     QVector<QLabel*> playerLabels;
-    // QVector<QLabel*> cardLabels;
+    QVector<QLabel*> actionCards;
     QVector<QString> playerNames;
 
 
@@ -46,27 +46,32 @@ private:
     QPushButton *SanctionButton;
     QPushButton *CoupButton;
     QPushButton *InvestButton;
-
     QPushButton *homeButton;
 
     std::unique_ptr<Game> game;
-    // QLabel *titleLabel;
+    std::function<std::string(Player&, Player&)> pendingActionFunction;
+    bool awaitingTargetSelection = false;
 
     void setupPlayers();
     void setupActions();
+    void setupActionCards();
     void updateTurnLabel();
     void updateCoinLabel();
     void animateTurnLabel();
-
+    void animateCardToCenter(QPushButton* card);
+    void chooseAndExecuteTargetAction(const QString& action);
+    void requestTargetForAction(std::function<std::string(Player&, Player&)> actionFunc);
+    void resetPlayerHighlights();
+    bool eventFilter(QObject *watched, QEvent *event)override;
 
 private slots:
     //void handleIncome();
     void handleGather();
     void handleTax();
     void handleBribe();
-    void handleArrest();
-    void handleSanction();
-    void handleCoup();
+    // void handleArrest();
+    // void handleSanction();
+    // void handleCoup();
     void handleInvest();
 };
 

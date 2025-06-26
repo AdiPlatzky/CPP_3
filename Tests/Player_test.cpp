@@ -70,10 +70,10 @@ TEST_CASE("Player deactivation behavior") {
 TEST_CASE("Player blocking system") {
     Player p("Charlie", std::make_unique<DummyRole>());
     CHECK_FALSE(p.isBlocked("tax"));
-    p.blockAction("tax");
-    p.blockAction("tax");
+    p.blockAction("tax",1);
+    p.blockAction("tax",1);
     CHECK(p.isBlocked("tax"));
-    p.blockAction("");
+    p.blockAction("",1);
     CHECK(p.isBlocked(""));
     p.clearBlocks();
     CHECK_FALSE(p.isBlocked("tax"));
@@ -82,9 +82,9 @@ TEST_CASE("Player blocking system") {
 
 TEST_CASE("Block logic extended") {
     Player p("BlockMaster", std::make_unique<DummyRole>());
-    p.blockAction("steal");
+    p.blockAction("steal",1);
     CHECK(p.isBlocked("steal"));
-    p.blockAction("steal"); // redundant
+    p.blockAction("steal",1); // redundant
     p.clearBlocks();
     CHECK_FALSE(p.isBlocked("steal"));
 }

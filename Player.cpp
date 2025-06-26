@@ -52,16 +52,23 @@ void Player::deactivate() {
   active = false;
 }
 
-void Player::blockAction(const std::string& actionName) {
-  blockedActions.insert(actionName);
+void Player::blockAction(const std::string& actionName, int turns = 1) {
+  blockedActions[actionName]= turns;
 }
 
 bool Player::isBlocked(const std::string& actionName) const {
-  return blockedActions.count(actionName) > 0;
+  auto it = blockedActions.find(actionName);
+  return it != blockedActions.end() && it->second > 0;
 }
 
 void Player::clearBlocks() {
-  blockedActions.clear();
+  for (auto it = blockedActions.begin(); it != blockedActions.end(); ) {
+    if (--(it->second) <= 0) {
+      it = blockedActions.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 
 bool Player::hasBonusAction() const {

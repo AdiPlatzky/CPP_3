@@ -17,13 +17,13 @@ void Governor::onTax(Player& player, Player& self, Game& game){
   // אם השחקן המבצע זה אני – תוספת של 1
   if(&player == &self){
     if(game.getCoinPool() < 1){
-      throw std::runtime_error("Not enough coins for Governor bonus.");
+      std::cout << "You don't have enough coins for Governor bonus.";
     }
     player.addCoins(1);
     game.getCoinPool()--;
   }
   else {
     // Governor עוצר את הפעולה של מישהו אחר
-    player.blockAction("tax");
+    player.blockAction("tax",1);
   }
 }

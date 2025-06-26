@@ -29,6 +29,6 @@ void Merchant::onArrest(Player& self, Player& attacker, Game& game){
     attacker.removeCoins(1);
   }
   else {
-    throw std::runtime_error("Merchant doesn't have enough coins to be arrested");
+    std::cout << "Merchant doesn't have enough coins to be arrested";
   }
 }
