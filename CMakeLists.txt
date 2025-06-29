@@ -25,6 +25,8 @@ set(SOURCE_COMMON
         GUI/GameBoardWindow.h
         GUI/InstructionsWindow.cpp
         GUI/InstructionsWindow.h
+        GUI/PlayerRegistrationScreen.h
+        GUI/PlayerRegistrationScreen.cpp
 )
 
 # קבצי בדיקות

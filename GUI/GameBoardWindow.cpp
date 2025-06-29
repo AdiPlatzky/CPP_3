@@ -9,6 +9,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QGridLayout>
+#include <QGraphicsOpacityEffect>
 #include <QPixmap>
 #include <QIcon>
 #include <QInputDialog>
@@ -16,20 +17,99 @@
 #include <QMouseEvent>
 
 
-GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
+// GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
+// {
+//     setWindowTitle("New Game - COUP");
+//     resize(1000, 700);
+//
+//     mainLayout = new QVBoxLayout(this);
+//
+//     homeButton = new QPushButton("🏠 Back to manu", this);
+//     connect(homeButton, &QPushButton::clicked, [=]() {
+//         auto *mainMenu = new MainWindow();
+//         mainMenu->show();
+//         this->close();
+//     });
+//     mainLayout->addWidget(homeButton);
+//
+//
+//     turnLabel = new QLabel(this);
+//     // highlightLayout = new QVBoxLayout();
+//     // mainLayout->addLayout(highlightLayout);
+//     turnLabel->setAlignment(Qt::AlignCenter);
+//     QFont font = turnLabel->font();
+//     font.setPointSize(18);
+//     turnLabel->setFont(font);
+//     mainLayout->addStretch(1);
+//     mainLayout->addWidget(turnLabel, 0, Qt::AlignHCenter);
+//     mainLayout->addStretch(1);
+//
+//
+//
+//     coinLabel = new QLabel(this);
+//     coinLabel->setAlignment(Qt::AlignCenter);
+//     QFont cFont = coinLabel->font();
+//     font.setPointSize(14);
+//     coinLabel->setFont(cFont);
+//     mainLayout->addStretch(1);
+//     //mainLayout->addWidget(coinLabel, 0, Qt::AlignHCenter);
+//     mainLayout->addStretch(1);
+//
+//     actionResultLabel = new QLabel(this);
+//     actionResultLabel->setAlignment(Qt::AlignCenter);
+//     actionResultLabel->setText("Choose action");
+//     mainLayout->addWidget(actionResultLabel);
+//
+//     // playerNames = {"Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6"};
+//     // game = std::make_unique<Game>();
+//     //
+//     // for (const QString &name : playerNames) {
+//     //     auto role = RoleFactory::createRandomRole();
+//     //     auto player = std::make_shared<Player>(name.toStdString(), std::move(role));
+//     //     game->addPlayer(player);
+//     // }
+//
+//     setupPlayers();
+//     setupActions();
+//     updateTurnLabel();
+//     highlightCurrentPlayer();
+//     updateCoinLabel();
+// }
+
+GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& players, QWidget *parent)
+    : QWidget(parent)
 {
     setWindowTitle("New Game - COUP");
     resize(1000, 700);
 
     mainLayout = new QVBoxLayout(this);
 
-    homeButton = new QPushButton("🏠 Back to manu", this);
+    homeButton = new QPushButton("🏠 Back to menu", this);
     connect(homeButton, &QPushButton::clicked, [=]() {
         auto *mainMenu = new MainWindow();
         mainMenu->show();
         this->close();
     });
     mainLayout->addWidget(homeButton);
+
+    // יצירת פאנל בית קברות
+    graveyardDock = new QDockWidget("🪦 בית הקברות", this);
+    graveyardDock->setAllowedAreas(Qt::RightDockWidgetArea);
+    graveyardDock->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable);
+
+    // רשימת שחקנים מודחים
+    graveyardList = new QListWidget(graveyardDock);
+    graveyardList->setStyleSheet("background-color: #f4f4f4; font-size: 14px;");
+    graveyardDock->setWidget(graveyardList);
+
+    // מאפייני עיצוב ומיקום
+    graveyardDock->setMinimumWidth(150);
+    graveyardDock->setMaximumWidth(200);
+    graveyardDock->setFloating(false);
+    graveyardDock->setVisible(true);
+
+    // הוספה לפריסת המסך
+    mainLayout->addWidget(graveyardDock);
 
     turnLabel = new QLabel(this);
     turnLabel->setAlignment(Qt::AlignCenter);
@@ -40,14 +120,12 @@ GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
     mainLayout->addWidget(turnLabel, 0, Qt::AlignHCenter);
     mainLayout->addStretch(1);
 
-
     coinLabel = new QLabel(this);
     coinLabel->setAlignment(Qt::AlignCenter);
     QFont cFont = coinLabel->font();
     font.setPointSize(14);
     coinLabel->setFont(cFont);
     mainLayout->addStretch(1);
-    //mainLayout->addWidget(coinLabel, 0, Qt::AlignHCenter);
     mainLayout->addStretch(1);
 
     actionResultLabel = new QLabel(this);
@@ -55,64 +133,30 @@ GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
     actionResultLabel->setText("Choose action");
     mainLayout->addWidget(actionResultLabel);
 
-    playerNames = {"Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6"};
-    game = std::make_unique<Game>();
-
-    for (const QString &name : playerNames) {
-        auto role = RoleFactory::createRandomRole();
-        auto player = std::make_shared<Player>(name.toStdString(), std::move(role));
+    // ניצור את האובייקט של Game ונכניס לתוכו את השחקנים שקיבלנו
+    game = std::make_unique<Game>(this);
+    connect(game.get(), &Game::gameOverSignal, this, &GameBoardWindow::handleGameEnd);
+    connect(game.get(), &Game::playerEliminated, this, &GameBoardWindow::addPlayerToGraveyard);
+    for (const auto& player : players) {
         game->addPlayer(player);
     }
+
+    connect(game.get(), &Game::playerEliminated, this, &GameBoardWindow::addPlayerToGraveyard);
 
     setupPlayers();
     setupActions();
     updateTurnLabel();
+    highlightCurrentPlayer();
     updateCoinLabel();
-
-    // mainLayout->addWidget(turnLabel);
-    //
-    // turnLabel = new QLabel(this);
-    // setWindowTitle("לוח המשחק");
-    // setMinimumSize(800, 600);
-    //
-    //
-    // mainLayout = new QVBoxLayout(this);
-    // turnLabel = new QLabel("Player turn: Player 1",this);
-    // turnLabel->setAlignment(Qt::AlignCenter);
-    // QFont font = turnLabel->font();
-    // font.setPointSize(16);
-    // turnLabel->setFont(font);
-    // mainLayout->addWidget(turnLabel);
-    //
-    // setupPlayers();
-    // setupActions();
-    //
-
-    // auto *layout = new QVBoxLayout(this);
-    //
-    // titleLabel = new QLabel("כאן יוצג לוח המשחק 🎮");
-    // titleLabel->setAlignment(Qt::AlignCenter);
-    //
-    // closeButton = new QPushButton("סגור משחק");
-    //
-    // layout->addWidget(titleLabel);
-    // layout->addWidget(closeButton);
-    //
-    // setLayout(layout);
-    //
-    //
-    // move(QGuiApplication::primaryScreen()->geometry().center() - frameGeometry().center());
-    //
-    // connect(closeButton, &QPushButton::clicked, this, &GameBoardWindow::closeGame);
 }
+
 
 void GameBoardWindow::setupPlayers() {
     playerLayout = new QHBoxLayout();
     const auto& playersList = game->getPlayer();
 
-    // QStringList players = {"Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6"};
-
     for (const auto& playerPtr  : playersList) {
+        if (!playerPtr->isActive()){continue;}// דלג על שחקנים מודחים
         std::string name = playerPtr->getName();
         std::string role = playerPtr->getRole()->getName();
         QString label = QString::fromStdString(name + " (" + role + ")");
@@ -123,8 +167,82 @@ void GameBoardWindow::setupPlayers() {
         player->setAlignment(Qt::AlignCenter);
         playerLabels.append(player);
         playerLayout->addWidget(player);
+        playerLabelMap[QString::fromStdString(name)] = player; // חדש
+
     }
     mainLayout->addLayout(playerLayout);
+    highlightLayout = new QVBoxLayout();
+    mainLayout->addLayout(highlightLayout);
+}
+
+void GameBoardWindow::highlightCurrentPlayer() {
+    mainLayout->addStretch(2);
+
+    highlightLayout = new QVBoxLayout();
+    mainLayout->addLayout(highlightLayout);
+
+    if (highlightPlayer) {
+        highlightLayout->removeWidget(highlightPlayer);
+
+        mainLayout->addStretch(1);
+        mainLayout->addWidget(highlightPlayer, 0, Qt::AlignCenter);
+        mainLayout->addStretch(1);
+
+        playerLayout->insertWidget(highlightIndex, highlightPlayer);
+        highlightPlayer = nullptr;
+    }
+
+    const Player &currentPlayer = game->getCurrentPlayer();
+    QString name = QString::fromStdString(currentPlayer.getName());
+    if (playerLabelMap.contains(name)) {
+        highlightPlayer = playerLabelMap[name];
+    }
+    // for (int i = 0; i < game->getPlayer().size(); i++) {
+    //     if (game->getPlayer()[i].get() == &currentPlayer) {
+    //         highlightPlayer = playerLabels[i];
+    //         highlightIndex = i;
+    //         break;
+    //     }
+    // }
+
+    if (highlightPlayer) {
+        playerLayout->removeWidget(highlightPlayer);
+        mainLayout->addStretch(2);
+        mainLayout->addWidget(highlightPlayer, 0, Qt::AlignCenter);
+        mainLayout->addStretch(2);
+    }
+}
+void GameBoardWindow::updatePlayerStatusVisuals() {
+    const auto& playersList = game->getPlayer();
+
+    for (const auto& player : playersList) {
+        if (!player->isActive()) {
+            QString name = QString::fromStdString(player->getName());
+
+            if (!playerLabelMap.contains(name))
+                continue;
+
+            QLabel* label = playerLabelMap[name];
+
+            if (!label->isVisible())
+                continue;
+
+            // 1. הפוך לחצי שקוף
+            auto *effect = new QGraphicsOpacityEffect(this);
+            effect->setOpacity(0.4);
+            label->setGraphicsEffect(effect);
+
+            // 2. הסר מהמסך
+            playerLayout->removeWidget(label);
+            label->hide();
+
+            // 3. הוסף לבית הקברות
+            addPlayerToGraveyard(label->text(), "הודח מהמשחק");
+
+            // 4. הסרה מהמפה
+            playerLabelMap.remove(name);
+        }
+    }
 }
 
 // void GameBoardWindow::setupCards() {
@@ -195,21 +313,44 @@ void GameBoardWindow::updateTurnLabel() {
     // animateTurnLabel();
 }
 void GameBoardWindow::updateCoinLabel() {
-    const auto& playersList = game->getPlayer();
-    for (int i = 0; i < playersList.size(); ++i) {
-        auto& player = playersList[i];
-        QString name = QString::fromStdString(player->getName());
-        QString role = QString::fromStdString(player->getRole()->getName());
-        QString coins = QString::number(player->getCoins());
-        playerLabels[i]->setText(name + " (" + role + ") - 💰" + coins);
+    for (const auto& playerPtr : game->getPlayer())
+    {
+        QString name = QString::fromStdString(playerPtr->getName());
+        if (!playerLabelMap.contains(name)) continue;
+
+        QString role = QString::fromStdString(playerPtr->getRole()->getName());
+        QString coins = QString::number(playerPtr->getCoins());
+
+        QLabel *label = playerLabelMap[name];
+        label->setText(name + " (" + role + ") - 💰" + coins);
+
+        if (!playerPtr->isActive())
+        {
+            label->setStyleSheet("background: #DDEEFF; opacity: 0.5; border: 2px solid gray;");
+        }
+        else
+        {
+            label->setStyleSheet("background: #DDEEFF; border: 2px solid black;");
+        }
     }
 }
-// void GameBoardWindow::handleAction() {
-//     static int turn = 0;
-//     turn = (turn + 1) % playerLabels.size();
-//     turnLabel->setText("Player turn: " + playerLabels[turn]->text());
-//     animateTurnLabels();
+//     const auto& playersList = game->getPlayer();
+//     for (int i = 0; i < playersList.size(); i++) {
+//         auto& player = playersList[i];
+//         QString name = QString::fromStdString(player->getName());
+//         QString role = QString::fromStdString(player->getRole()->getName());
+//         QString coins = QString::number(player->getCoins());
+//         playerLabels[i]->setText(name + " (" + role + ") - 💰" + coins);
+//
+//         if (!player->isActive()) {
+//             playerLabels[i]->setStyleSheet("background: #DDEEFF; opacity: 0.5; border: 2px solid gray;");
+//         }
+//         else {
+//             playerLabels[i]->setStyleSheet("background: #DDEEFF; border: 2px solid black;");
+//         }
+//     }
 // }
+
 
 void GameBoardWindow::animateTurnLabel() {
     auto *animation = new QPropertyAnimation(turnLabel, "geometry");
@@ -235,16 +376,32 @@ void GameBoardWindow::resetPlayerHighlights() {
 
 bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
     if (awaitingTargetSelection && event->type() == QEvent::MouseButtonPress) {
-        for (int i = 0; i < playerLabels.size(); ++i) {
-            if (watched == playerLabels[i]) {
+        for (auto it = playerLabelMap.begin(); it != playerLabelMap.end(); ++it) {
+            if (watched == it.value()) {
                 try {
+                    QString name = it.key();
                     Player& attacker = game->getCurrentPlayer();
-                    Player& target = *game->getPlayer()[i];
+
+                    // חיפוש השחקן לפי שם (כי getPlayer() מחזיר מצביעים)
+                    Player* targetPtr = nullptr;
+                    for (const auto& p : game->getPlayer()) {
+                        if (QString::fromStdString(p->getName()) == name) {
+                            targetPtr = p.get();
+                            break;
+                        }
+                    }
+
+                    if (!targetPtr) throw std::runtime_error("Target player not found");
+
+                    Player& target = *targetPtr;
+
                     QString result = QString::fromStdString(pendingActionFunction(attacker, target));
                     actionResultLabel->setText(result);
                     game->nextTurn();
                     updateTurnLabel();
+                    highlightCurrentPlayer();
                     updateCoinLabel();
+                    updatePlayerStatusVisuals();
                 } catch (const std::exception& e) {
                     QMessageBox::warning(this, "שגיאה", e.what());
                 }
@@ -255,6 +412,7 @@ bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
     }
     return QWidget::eventFilter(watched, event);
 }
+
 
 void GameBoardWindow::requestTargetForAction(std::function<std::string(Player &, Player &)> actionFunc) {
     awaitingTargetSelection = true;
@@ -293,20 +451,51 @@ void GameBoardWindow::requestTargetForAction(std::function<std::string(Player &,
 
 void GameBoardWindow::handleGather() {
     Player &attacker = game->getCurrentPlayer();
-    QString result = QString::fromStdString(game->performGather(attacker));
-    actionResultLabel->setText(result);
-    game->nextTurn();
+    if (attacker.isBlocked("gather")) {
+        QMessageBox::information(this, "Try author action", "This action is blocked");
+        updateTurnLabel();
+        highlightCurrentPlayer();
+        updateCoinLabel();
+    }
+    try {
+        QString result = QString::fromStdString(game->performGather(attacker));
+        actionResultLabel->setText(result);
+        //game->nextTurn();
+        updateTurnLabel();
+        highlightCurrentPlayer();
+        updateCoinLabel();
+    } catch (const std::exception& e) {
+        QMessageBox::warning(this, "This action is blocked try other action", e.what());
+    }
     updateTurnLabel();
+    highlightCurrentPlayer();
     updateCoinLabel();
+    game->nextTurn();
 }
 
 void GameBoardWindow::handleTax() {
     Player &attacker = game->getCurrentPlayer();
-    QString result = QString::fromStdString(game->performTax(attacker));
-    actionResultLabel->setText(result);
-    game->nextTurn();
+    if (attacker.isBlocked("tax")) {
+        QMessageBox::information(this, "Try author action", "This action is blocked");
+        updateTurnLabel();
+        highlightCurrentPlayer();
+        updateCoinLabel();
+    }
+
+    try {
+        QString result = QString::fromStdString(game->performTax(attacker));
+        actionResultLabel->setText(result);
+        //game->nextTurn();
+        updateTurnLabel();
+        highlightCurrentPlayer();
+        updateCoinLabel();
+    } catch (const std::exception& e) {
+        QMessageBox::warning(this, "This action is blocked", e.what());
+    }
     updateTurnLabel();
+    highlightCurrentPlayer();
     updateCoinLabel();
+    game->nextTurn();
 }
 
 void GameBoardWindow::handleBribe() {
@@ -318,6 +507,7 @@ void GameBoardWindow::handleBribe() {
         game->nextTurn();
     }
     updateTurnLabel();
+    highlightCurrentPlayer();
     updateCoinLabel();
 
 }
@@ -376,7 +566,15 @@ void GameBoardWindow::handleInvest() {
     actionResultLabel->setText(result);
     game->nextTurn();
     updateTurnLabel();
+    highlightCurrentPlayer();
     updateCoinLabel();
+}
+
+void GameBoardWindow::handleGameEnd(const QString& winnerName) {
+    QMessageBox::information(this, "Winner!!", winnerName + "Is winner in the game!!");
+    auto *mainMenu = new MainWindow();
+    mainMenu->show();
+    this->close();
 }
 
 
@@ -385,3 +583,36 @@ void GameBoardWindow::handleInvest() {
 // void GameBoardWindow::closeGame() {
 //     close();  // סוגר את החלון הזה
 // }
+
+void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &reason) {
+    QLabel *graveLabel = new QLabel(name, this);
+    graveLabel->setStyleSheet(
+        "border: 2px solid gray; padding: 10px; background: #CCCCCC;"
+        "font-size: 10px; opacity: 0.5;"
+    );
+    graveLabel->setMinimumSize(100, 60);
+    graveLabel->setAlignment(Qt::AlignCenter);
+    graveLabel->setToolTip(reason);
+
+    QListWidgetItem *item = new QListWidgetItem();
+    graveyardList->addItem(item);
+    graveyardList->setItemWidget(item, graveLabel);
+
+    for (int i = 0; i < playerLabels.size(); ++i) {
+        if (playerLabelMap.contains(name)) {
+            QWidget *toRemove = playerLabelMap[name];
+            playerLayout->removeWidget(toRemove);
+            toRemove->hide();
+            playerLabelMap.remove(name);
+        }
+        // if (playerLabels[i]->text().contains(name)) {
+        //     QWidget *toRemove = playerLabels[i];
+        //     playerLayout->removeWidget(toRemove);
+        //     toRemove->hide();
+        //     playerLabels.remove(i);
+        //     break;
+        // }
+    }
+}
+
+

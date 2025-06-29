@@ -10,7 +10,7 @@
 #include <string>
 #include <map>
 
-Game::Game(){}
+Game::Game(QObject *parent) : QObject(parent){}
 Game::~Game(){}
 
 static std::map<std::pair<std::string, std::string>, int> arrestHistory;
@@ -102,6 +102,13 @@ void Game::checkGameOver(){
   }
   if(activeCount <= 1){
     gameOver = true;
+
+    for (const auto& p : players) {
+      if (p->isActive()) {
+        emit gameOverSignal(QString::fromStdString(p->getName()));
+        break;
+      }
+    }
   }
 }
 
@@ -314,12 +321,15 @@ std::string Game::performCoup(Player& attacker, Player& target){
   attacker.removeCoins(7);
   coinPool += 7;
 
+
   // הפעלת תגובת הגנה של ה־target (למשל General)
   target.getRole()->onCoup(target, attacker, *this);
 
   // אם עדיין פעיל – לא נחסם, ולכן מדיחים אותו
   if(target.isActive()){
-    target.deactivate();
+    target.deactivate();  // כאן הוא הופך ל־isActive = false
+    emit playerEliminated(
+      QString::fromStdString(target.getName()), "הודח בהפיכה על ידי " + QString::fromStdString(attacker.getName()));
   }
   checkGameOver();
   return attacker.getName() + "You killed: " + target.getName();

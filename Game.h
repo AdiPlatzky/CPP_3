@@ -10,9 +10,13 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <QObject>
 
 class Player;
-class Game {
+class Game : public QObject {
+    Q_OBJECT
+
+
   private:
     std::vector<std::shared_ptr<Player>> players;
     int currentTurnIndex = 0;
@@ -20,7 +24,7 @@ class Game {
     bool gameOver = false;
 
     public:
-      Game();
+      Game(QObject* parent = nullptr);
       ~Game();
       // ניהול שחקנים
       void addPlayer(const std::shared_ptr<Player>& player);
@@ -30,6 +34,13 @@ class Game {
       // תור
       Player& getCurrentPlayer();
       void nextTurn();
+      bool isGameOver() const;
+      std::string getWinner() const; // זכייה
+      // תוספת לשימוש פנימי
+      int& getCoinPool();  // קופה מרכזית
+      void addToCoinPool(int coinPool); // להוסיף לקופה המרכזית
+      void checkGameOver();
+
 
       // פעולות
       std::string performGather(Player& player);
@@ -40,15 +51,9 @@ class Game {
       std::string performCoup(Player& attacker, Player& target);
       std::string performInvest(Player& player);
 
-      // זכייה
-      std::string getWinner() const;
-
-     // תוספת לשימוש פנימי
-      int& getCoinPool();  // קופה מרכזית
-      void addToCoinPool(int coinPool); // להוסיף לקופה המרכזית
-      bool isGameOver() const;
-      void checkGameOver();
-
+    signals:
+    void gameOverSignal(const QString& winnerName);
+    void playerEliminated(const QString& playerName, const QString& reason);
 
 };
 

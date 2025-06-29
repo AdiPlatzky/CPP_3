@@ -2,6 +2,12 @@
 #define GAMEBOARDWINDOW_H
 
 #include <QWidget>
+#include <QMap>
+#include <QListWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QDockWidget>
 #include <QVector>
 #include <QString>
 #include <memory>
@@ -20,7 +26,8 @@ class GameBoardWindow : public QWidget {
     Q_OBJECT
 
 public:
-    explicit GameBoardWindow(QWidget *parent = nullptr);
+    //explicit GameBoardWindow(QWidget *parent = nullptr);
+    explicit GameBoardWindow(const std::vector<std::shared_ptr<Player>>& players, QWidget *parent = nullptr);
 
     // private slots:
     //     void closeGame();
@@ -29,15 +36,18 @@ private:
     QLabel *turnLabel;
     QLabel *coinLabel;
     QLabel *actionResultLabel;
+    QLabel *highlightPlayer = nullptr;
     QVBoxLayout *mainLayout;
     QHBoxLayout *playerLayout;
     QGridLayout *actionLayout;
     QHBoxLayout *cardLayout;
+    QVBoxLayout *highlightLayout;
 
     QVector<QLabel*> playerLabels;
     QVector<QLabel*> actionCards;
     QVector<QString> playerNames;
 
+    QMap<QString, QLabel*> playerLabelMap; // map name → label
 
     QPushButton *GatherButton;
     QPushButton *TaxButton;
@@ -48,9 +58,16 @@ private:
     QPushButton *InvestButton;
     QPushButton *homeButton;
 
+    // תוספות חדשות לבית הקברות:
+    QDockWidget *graveyardDock;
+    QListWidget *graveyardList;
+
+    QMap<QString, QWidget*> playerWidgets; // קישור בין שם שחקן לווידג'ט שלו
+
     std::unique_ptr<Game> game;
     std::function<std::string(Player&, Player&)> pendingActionFunction;
     bool awaitingTargetSelection = false;
+    int highlightIndex = -1;
 
     void setupPlayers();
     void setupActions();
@@ -62,7 +79,14 @@ private:
     void chooseAndExecuteTargetAction(const QString& action);
     void requestTargetForAction(std::function<std::string(Player&, Player&)> actionFunc);
     void resetPlayerHighlights();
+    void highlightCurrentPlayer();
+
+
+    void updatePlayerStatusVisuals();
+
     bool eventFilter(QObject *watched, QEvent *event)override;
+    void addPlayerToGraveyard(const QString &name,  const QString &reason);
+
 
 private slots:
     //void handleIncome();
@@ -73,6 +97,8 @@ private slots:
     // void handleSanction();
     // void handleCoup();
     void handleInvest();
+    void handleGameEnd(const QString& winnerName);
+
 };
 
 #endif // GAMEBOARDWINDOW_H

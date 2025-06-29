@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "InstructionsWindow.h"
 #include "GameBoardWindow.h"
+#include "PlayerRegistrationScreen.h"
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -15,13 +16,13 @@ MainWindow::MainWindow(QWidget *parent)
 
   layout = new QVBoxLayout(this);
 
-  newGameButton = new QPushButton("משחק חדש", this);
+  newGameButton = new QPushButton("New Game", this);
   instructionsButton = new QPushButton("הוראות משחק", this);
 
   layout->addWidget(newGameButton);
   layout->addWidget(instructionsButton);
 
-  connect(newGameButton, &QPushButton::clicked, this, &MainWindow::openNewGame);
+  connect(newGameButton, &QPushButton::clicked, this, &MainWindow::openPlayerRegistration);
   connect(instructionsButton, &QPushButton::clicked, this, &MainWindow::openInstructions);
   //
   // auto *central = new QWidget(this);
@@ -32,14 +33,28 @@ MainWindow::MainWindow(QWidget *parent)
   // setCentralWidget(central);
 }
 
-MainWindow::~MainWindow() {}
+//MainWindow::~MainWindow() {}
 
-void MainWindow::openNewGame() {
-  auto *gameBoardWindow = new GameBoardWindow();
+void MainWindow::openPlayerRegistration() {
+    auto *registrationScreen = new PlayerRegistrationScreen();
+    registrationScreen->show();
+    this->hide(); // נסתיר את התפריט הראשי (לא נסגור עדיין)
+
+    connect(registrationScreen, &PlayerRegistrationScreen::playerRegistered, this, &MainWindow::startGameWithPlayers);
+}
+
+void MainWindow::startGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players) {
+  auto *gameBoardWindow = new GameBoardWindow(players);
   gameBoardWindow->show();
   this->close();
-  // QMessageBox::information(this, "משחק חדש", "כאן יופיע לוח המשחק 🎮");
 }
+
+// void MainWindow::openNewGame() {
+//   auto *gameBoardWindow = new GameBoardWindow();
+//   gameBoardWindow->show();
+//   this->close();
+//   // QMessageBox::information(this, "משחק חדש", "כאן יופיע לוח המשחק 🎮");
+// }
 
 void MainWindow::openInstructions() {
   auto *instructionsWindow = new InstructionsWindow();

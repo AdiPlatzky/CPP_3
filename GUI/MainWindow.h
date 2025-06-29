@@ -14,11 +14,13 @@ class MainWindow : public QWidget {
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    //~MainWindow();
 
 private slots:
-    void openNewGame();
+    //void openNewGame();
     void openInstructions();
+    void openPlayerRegistration(); // כדי לפתוח את המסך לבחירת שחקנים
+    void startGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players); //  כשסיימנו לבחור שחקנים, נתחיל משחק איתם
 
 private:
     QPushButton *newGameButton;
