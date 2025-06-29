@@ -11,6 +11,12 @@
 #include <string>
 #include <optional>
 #include <QObject>
+#include <limits>
+
+struct ActionResult {
+  bool success;
+  std::string message;
+};
 
 class Player;
 class Game : public QObject {
@@ -20,7 +26,7 @@ class Game : public QObject {
   private:
     std::vector<std::shared_ptr<Player>> players;
     int currentTurnIndex = 0;
-    int coinPool = INFINITY;
+    int coinPool = std::numeric_limits<int>::max();
     bool gameOver = false;
 
     public:
@@ -43,13 +49,20 @@ class Game : public QObject {
 
 
       // פעולות
-      std::string performGather(Player& player);
-      std::string performTax(Player& player);
-      std::string performBribe(Player& player);
-      std::string performArrest(Player& attacker, Player& terget);
-      std::string performSanction(Player& attacker, Player& target);
-      std::string performCoup(Player& attacker, Player& target);
-      std::string performInvest(Player& player);
+    ActionResult performGather(Player& player);
+    ActionResult performTax(Player& player);
+    ActionResult performBribe(Player& player);
+    ActionResult performArrest(Player& attacker, Player& terget);
+    ActionResult performSanction(Player& attacker, Player& target);
+    ActionResult performCoup(Player& attacker, Player& target);
+    ActionResult performInvest(Player& player);
+      // std::string performGather(Player& player);
+      // std::string performTax(Player& player);
+      // std::string performBribe(Player& player);
+      // std::string performArrest(Player& attacker, Player& terget);
+      // std::string performSanction(Player& attacker, Player& target);
+      // std::string performCoup(Player& attacker, Player& target);
+      // std::string performInvest(Player& player);
 
     signals:
     void gameOverSignal(const QString& winnerName);

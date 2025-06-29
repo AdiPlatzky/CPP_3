@@ -43,7 +43,7 @@ private:
     QHBoxLayout *cardLayout;
     QVBoxLayout *highlightLayout;
 
-    QVector<QLabel*> playerLabels;
+    //QVector<QLabel*> playerLabels;
     QVector<QLabel*> actionCards;
     QVector<QString> playerNames;
 
@@ -65,7 +65,7 @@ private:
     QMap<QString, QWidget*> playerWidgets; // קישור בין שם שחקן לווידג'ט שלו
 
     std::unique_ptr<Game> game;
-    std::function<std::string(Player&, Player&)> pendingActionFunction;
+    std::function<ActionResult(Player&, Player&)> pendingActionFunction;
     bool awaitingTargetSelection = false;
     int highlightIndex = -1;
 
@@ -77,7 +77,7 @@ private:
     void animateTurnLabel();
     void animateCardToCenter(QPushButton* card);
     void chooseAndExecuteTargetAction(const QString& action);
-    void requestTargetForAction(std::function<std::string(Player&, Player&)> actionFunc);
+    void requestTargetForAction(std::function<ActionResult(Player&, Player&)> actionFunc);
     void resetPlayerHighlights();
     void highlightCurrentPlayer();
 

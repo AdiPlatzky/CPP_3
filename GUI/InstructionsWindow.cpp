@@ -18,7 +18,7 @@ InstructionsWindow::InstructionsWindow(QWidget *parent) : QWidget(parent) {
   instruction->setText("Welcome to COUP! \n כאן יופיעו הוראות המשחק");
 
   auto *homeButton = new QPushButton("🏠 חזרה לתפריט", this);
-  connect(homeButton, &QPushButton::clicked, [=]() {
+  connect(homeButton, &QPushButton::clicked, [this]() {
       auto *mainMenu = new MainWindow();
       mainMenu->show();
       this->close();
