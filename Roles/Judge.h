@@ -10,6 +10,7 @@
 #include "../Role.h"
 #include <string>
 
+class QString;
 class Player;
 class Game;
 
@@ -23,6 +24,7 @@ class Judge : public Role {
     // תגובה לפעולת שוחד
     void onBribe(Player& actor, Player& self, Game& game) override;
     void onSanction(Player& actor, Player& self, Game& game) override;
+    bool canBlock(const std::string &actionName) const override;
 
 };
 #endif //JUDGE_H

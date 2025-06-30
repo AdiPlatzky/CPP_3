@@ -87,3 +87,7 @@ bool Player::consumeBonusAction() {
   }
   return false;
 }
+
+bool Player::canBlock(const std::string& actionName) const {
+  return role && role->canBlock(actionName);
+}

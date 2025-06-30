@@ -27,3 +27,8 @@ void Governor::onTax(Player& player, Player& self, Game& game){
     player.blockAction("tax",1);
   }
 }
+
+bool Governor::canBlock(const std::string &actionName) const {
+  return actionName == "tax";
+}
+

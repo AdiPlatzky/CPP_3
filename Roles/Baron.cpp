@@ -39,3 +39,4 @@ void Baron::onInvest(Player& self, Game& game){
     game.addToCoinPool(-3);
 }
 
+

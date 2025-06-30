@@ -27,6 +27,10 @@ set(SOURCE_COMMON
         GUI/InstructionsWindow.h
         GUI/PlayerRegistrationScreen.h
         GUI/PlayerRegistrationScreen.cpp
+        GUI/BlockingDialog.h
+        GUI/BlockingDialog.cpp
+
+
 )
 
 # קבצי בדיקות

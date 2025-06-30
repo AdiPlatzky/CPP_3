@@ -8,6 +8,7 @@
 #include <string>
 #include "../Role.h"
 
+class QString;
 class Player;
 class Game;
 
@@ -18,6 +19,8 @@ class Governor : public Role {
 
     std::string getName() const override;
     void onTax(Player& player, Player& self, Game& game) override;
+    bool canBlock(const std::string &actionName) const override;
+
 };
 
 

@@ -11,6 +11,8 @@
 class RoleFactory {
   public:
     static std::unique_ptr<Role> createRandomRole();
+    static std::unique_ptr<Role> createRole(Player &player);
+
 
 };
 

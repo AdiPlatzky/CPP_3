@@ -1,5 +1,6 @@
 #include "GameBoardWindow.h"
 #include "MainWindow.h"
+#include "BlockingDialog.h"
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -15,6 +16,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QMouseEvent>
+#include <QDebug>
 
 
 // GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
@@ -272,22 +274,15 @@ void GameBoardWindow::setupActions() {
     connect(GatherButton, &QPushButton::clicked, this, &GameBoardWindow::handleGather);
     connect(TaxButton, &QPushButton::clicked, this, &GameBoardWindow::handleTax);
     connect(BribeButton, &QPushButton::clicked, this, &GameBoardWindow::handleBribe);
-    connect(ArrestButton, &QPushButton::clicked, [this]() {
-    requestTargetForAction([this](Player &attacker, Player &target) {
-        return game->performArrest(attacker, target);
-    });
-});
+    connect(ArrestButton, &QPushButton::clicked, this, &GameBoardWindow::handleArrest);
     connect(SanctionButton, &QPushButton::clicked, [this]() {
     requestTargetForAction([this](Player &attacker, Player &target) {
         return game->performSanction(attacker, target);
     });
 });
-    connect(CoupButton, &QPushButton::clicked,  [this]() {
-    requestTargetForAction([this](Player &attacker, Player &target) {
-        return game->performCoup(attacker, target);
-    });
-});
+    connect(CoupButton, &QPushButton::clicked, this, &GameBoardWindow::handleCoup);
     connect(InvestButton, &QPushButton::clicked, this, &GameBoardWindow::handleInvest);
+
 
 
     actionLayout->addWidget(GatherButton, 0,0);
@@ -297,9 +292,6 @@ void GameBoardWindow::setupActions() {
     actionLayout->addWidget(SanctionButton, 0,4);
     actionLayout->addWidget(CoupButton, 0,5);
     actionLayout->addWidget(InvestButton, 1,0);
-
-
-
     mainLayout->addLayout(actionLayout);
     // actionButton = new QPushButton("Make actions", this);
     // connect(actionButton, &QPushButton::clicked, this, &GameBoardWindow::handleAction);
@@ -496,70 +488,265 @@ void GameBoardWindow::requestTargetForAction(std::function<ActionResult(Player&,
 //     updateCoinLabel();
 // }
 
+// void GameBoardWindow::handleGather() {
+//     // QString message;
+//     Player &attacker = game->getCurrentPlayer();
+//     // פה אני בודקת מצב שהפעולה כבר חסומה
+//     if (attacker.isBlocked("gather")) {
+//         QMessageBox::information(this, "Try author action", "Gather action is blocked for you");
+//         // updateTurnLabel();
+//         // highlightCurrentPlayer();
+//         // updateCoinLabel();
+//         return;
+//     }
+//     try {
+//         ActionResult result = game->performGather(attacker);
+//         // פה אני בודקת מצב של האפשרות לחסום פעולה אחרי שניסיתי לעשות אותה
+//         if (result.requiresBlocking) {
+//             QStringList blockers = game->getPlayersWhoCanBlock("Gather", attacker); // פונקציה שתכף נבנה
+//             bool wasBlocked = askForBlock(attacker.getName().data(), "Gather", blockers, "");
+//
+//             if (wasBlocked) {
+//                 // message = QString()
+//                 QMessageBox::information(this, "BLOCK MESSAGE",
+//                                          QString("Gather is blocked for you from %1").arg(blockers));
+//
+//                 //showMessage("הפעולה Bribe נחסמה!");
+//                 // return; // לא ממשיכים עם הפעולה
+//                 game->nextTurn();
+//             }
+//         }
+//         //QString result = QString::fromStdString(resultObj.message);
+//         // actionResultLabel->setText(result);
+//         actionResultLabel->setText(QString::fromStdString(result.message));
+//
+//         if (result.success) {
+//             game->nextTurn();
+//         }
+//
+//         //game->nextTurn();
+//         updateTurnLabel();
+//         highlightCurrentPlayer();
+//         updateCoinLabel();
+//     } catch (const std::exception& e) {
+//         QMessageBox::warning(this, "This action is blocked try other action", e.what());
+//     }
+//     // updateTurnLabel();
+//     // highlightCurrentPlayer();
+//     // updateCoinLabel();
+//     // game->nextTurn();
+// }
+
+void GameBoardWindow::requestTargetPlayer(const QString& title,
+                                          std::function<void(Player&)> callback) {
+    QStringList playerNames;
+    std::vector<Player*> alivePlayers;
+
+    for (const auto& p : game->getPlayer()) {
+        if (p->isActive() && p.get() != &game->getCurrentPlayer()) {
+            playerNames << QString::fromStdString(p->getName());
+            alivePlayers.push_back(p.get());
+        }
+    }
+
+    if (playerNames.isEmpty()) {
+        QMessageBox::information(this, "אין מטרות", "אין שחקנים אחרים לבחור בהם.");
+        return;
+    }
+
+    bool ok = false;
+    QString selectedName = QInputDialog::getItem(this, title,
+                                                 "בחר שחקן:", playerNames, 0, false, &ok);
+
+    if (ok) {
+        for (Player* p : alivePlayers) {
+            if (QString::fromStdString(p->getName()) == selectedName) {
+                callback(*p);  // שולחת את השחקן שנבחר חזרה לפעולה
+                return;
+            }
+        }
+    }
+}
+
+
 void GameBoardWindow::handleGather() {
-    Player &attacker = game->getCurrentPlayer();
+    Player& attacker = game->getCurrentPlayer();  // שימוש ב־Player& כמו בשאר הקוד
+
+    // בדיקה אם הפעולה כבר חסומה
     if (attacker.isBlocked("gather")) {
-        QMessageBox::information(this, "Try author action", "Gather action is blocked for you");
+        QMessageBox::information(this, "פעולה חסומה", "Gather חסומה עבורך בתור הזה.");
+        return;
+    }
+
+    try {
+        qDebug() << "DEBUG: מבצע performGather...";
+        ActionResult result = game->performGather(attacker);
+        qDebug() << "DEBUG: result.success =" << result.success;
+        qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
+
+        bool wasBlocked = false;
+
+        // אם הפעולה דורשת חסימה מצד שחקנים אחרים
+        if (result.requiresBlocking) {
+            std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("gather", &attacker);
+
+            // המרת vector<string> ל־QStringList
+            QStringList blockers;
+            for (const std::string& name : blockerNames) {
+                blockers << QString::fromStdString(name);
+            }
+
+            qDebug() << "DEBUG: blockers =" << blockers;
+
+
+            wasBlocked = askForBlock(
+                QString::fromStdString(attacker.getName()),
+                "Gather",
+                blockers,
+                ""  // אין מטרה
+            );
+
+            // אם הפעולה לא נחסמה – מבצעים אותה בפועל
+            if (result.success && !wasBlocked) {
+                try {
+                    game->applyTax(attacker);
+                } catch (const std::exception& e) {
+                    QMessageBox::warning(this, "שגיאה בביצוע הפעולה", e.what());
+                }
+            }
+
+            // if (wasBlocked) {
+            //     QMessageBox::information(this, "חסימה", "הפעולה Gather נחסמה!");
+
+                // הצגת תוצאה
+                actionResultLabel->setText(QString::fromStdString(result.message));
+                game->nextTurn();
+                updateTurnLabel();
+                highlightCurrentPlayer();
+                updateCoinLabel();
+                // return;
+            }
+        }
+
+        // // הצגת תוצאה
+        // actionResultLabel->setText(QString::fromStdString(result.message));
+
+        // if (result.success) {
+        //     game->nextTurn();
+        // }
+
         // updateTurnLabel();
         // highlightCurrentPlayer();
         // updateCoinLabel();
-        return;
+    // }
+    catch (const std::exception& e) {
+        QMessageBox::warning(this, "שגיאה", e.what());
     }
-    try {
-        ActionResult resultObj = game->performGather(attacker);
-        //QString result = QString::fromStdString(resultObj.message);
-        // actionResultLabel->setText(result);
-        actionResultLabel->setText(QString::fromStdString(resultObj.message));
-
-        if (resultObj.success) {
-            game->nextTurn();
-        }
-
-        //game->nextTurn();
-        updateTurnLabel();
-        highlightCurrentPlayer();
-        updateCoinLabel();
-    } catch (const std::exception& e) {
-        QMessageBox::warning(this, "This action is blocked try other action", e.what());
-    }
-    // updateTurnLabel();
-    // highlightCurrentPlayer();
-    // updateCoinLabel();
-    // game->nextTurn();
 }
+//
+// void GameBoardWindow::handleTax() {
+//     Player &attacker = game->getCurrentPlayer();
+//     if (attacker.isBlocked("tax")) {
+//         QMessageBox::information(this, "Try author action", "Tax action is blocked for you");
+//         // updateTurnLabel();
+//         // highlightCurrentPlayer();
+//         // updateCoinLabel();
+//         return;
+//     }
+//
+//     try {
+//         ActionResult resultObj = game->performTax(attacker);
+//         // QString result = QString::fromStdString(resultObj.message);
+//         // actionResultLabel->setText(result);
+//         actionResultLabel->setText(QString::fromStdString(resultObj.message));
+//
+//         if (resultObj.success) {
+//             game->nextTurn();
+//         }
+//
+//         //game->nextTurn();
+//         updateTurnLabel();
+//         highlightCurrentPlayer();
+//         updateCoinLabel();
+//     } catch (const std::exception& e) {
+//         QMessageBox::warning(this, "This action is blocked", e.what());
+//     }
+//     // updateTurnLabel();
+//     // highlightCurrentPlayer();
+//     // updateCoinLabel();
+//     // game->nextTurn();
+// }
 
 void GameBoardWindow::handleTax() {
-    Player &attacker = game->getCurrentPlayer();
+    Player& attacker = game->getCurrentPlayer();  // עדיין עובדים עם Player& כמו שסיכמנו
+
+    // בדיקה אם הפעולה כבר חסומה
     if (attacker.isBlocked("tax")) {
-        QMessageBox::information(this, "Try author action", "Tax action is blocked for you");
-        // updateTurnLabel();
-        // highlightCurrentPlayer();
-        // updateCoinLabel();
+        QMessageBox::information(this, "פעולה חסומה", "Tax חסומה עבורך בתור הזה.");
         return;
     }
 
     try {
-        ActionResult resultObj = game->performTax(attacker);
-        // QString result = QString::fromStdString(resultObj.message);
-        // actionResultLabel->setText(result);
-        actionResultLabel->setText(QString::fromStdString(resultObj.message));
+        qDebug() << "DEBUG: מבצע performTax...";
+        ActionResult result = game->performTax(attacker);
 
-        if (resultObj.success) {
-            game->nextTurn();
+        qDebug() << "DEBUG: result.success =" << result.success;
+        qDebug() << "DEBUG: result.message =" << QString::fromStdString(result.message);
+        qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
+
+        bool wasBlocked = false;
+
+        // אם הפעולה דורשת חסימה מצד שחקנים אחרים
+        if (result.requiresBlocking) {
+            qDebug() << "DEBUG: הפעולה דורשת חסימה – מחפש חוסמים...";
+            std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("tax", &attacker);
+
+            QStringList blockers;
+            for (const std::string& name : blockerNames) {
+                blockers << QString::fromStdString(name);
+            }
+
+            qDebug() << "DEBUG: blockers = " << blockers;
+
+            wasBlocked = askForBlock(
+                QString::fromStdString(attacker.getName()),
+                "Tax",
+                blockers,
+                ""  // אין מטרה
+            );
+
+            if (wasBlocked) {
+                QMessageBox::information(this, "חסימה", "הפעולה Tax נחסמה!");
+                game->nextTurn();
+                updateTurnLabel();
+                highlightCurrentPlayer();
+                updateCoinLabel();
+                return;
+            }
         }
 
-        //game->nextTurn();
+
+        // אם הפעולה לא נחסמה – מבצעים אותה בפועל
+        if (result.success && !wasBlocked) {
+            try {
+                game->applyTax(attacker);
+            } catch (const std::exception& e) {
+                QMessageBox::warning(this, "שגיאה בביצוע הפעולה", e.what());
+            }
+        }
+
+        // הצגת תוצאה
+        actionResultLabel->setText(QString::fromStdString(result.message));
+        game->nextTurn();
         updateTurnLabel();
         highlightCurrentPlayer();
         updateCoinLabel();
+
     } catch (const std::exception& e) {
-        QMessageBox::warning(this, "This action is blocked", e.what());
+        QMessageBox::warning(this, "שגיאה", e.what());
     }
-    // updateTurnLabel();
-    // highlightCurrentPlayer();
-    // updateCoinLabel();
-    // game->nextTurn();
 }
+
 
 void GameBoardWindow::handleBribe() {
     Player &attacker = game->getCurrentPlayer();
@@ -568,14 +755,56 @@ void GameBoardWindow::handleBribe() {
         return;
     }
     try {
-        ActionResult resultObj = game->performBribe(attacker);
+        qDebug() << "DEBUG: מבצע performBribe...";
+        ActionResult result = game->performBribe(attacker);
+
+        qDebug() << "DEBUG: result.success =" << result.success;
+        qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
+
+        bool wasBlocked = false;
+
         // QString result = QString::fromStdString(resultObj.message);
         // actionResultLabel->setText(result);
-        actionResultLabel->setText(QString::fromStdString(resultObj.message));
 
         // if (resultObj.success) {
         //     game->nextTurn();
         // }
+
+        if (result.requiresBlocking) {
+            std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("bribe", &attacker);
+            QStringList blockers;
+            for (const std::string& name : blockerNames) {
+                blockers << QString::fromStdString(name);
+            }
+
+            qDebug() << "DEBUG: blockers =" << blockers;
+
+            wasBlocked = askForBlock(
+                QString::fromStdString(attacker.getName()),
+                "Bribe",
+                blockers,
+                ""
+            );
+
+            if (wasBlocked) {
+                QMessageBox::information(this, "חסימה", "הפעולה Bribe נחסמה!");
+                game->nextTurn();
+                updateTurnLabel();
+                highlightCurrentPlayer();
+                updateCoinLabel();
+                return;
+            }
+        }
+
+        if (result.success && !wasBlocked) {
+            try {
+                game->applyBribe(attacker);
+            } catch (const std::exception& e) {
+                QMessageBox::warning(this, "שגיאה בביצוע הפעולה", e.what());
+            }
+        }
+
+        actionResultLabel->setText(QString::fromStdString(result.message));
 
         if (!attacker.hasBonusAction()) {
             game->nextTurn();
@@ -588,6 +817,69 @@ void GameBoardWindow::handleBribe() {
     }
 }
 
+void GameBoardWindow::handleArrest() {
+    Player& attacker = game->getCurrentPlayer();
+
+    if (attacker.isBlocked("arrest")) {
+        QMessageBox::information(this, "Try other action", "Arrest action is blocked for you");
+        return;
+    }
+    requestTargetPlayer("בחר שחקן למעצר", [this, &attacker](Player& target) {
+        try {
+            qDebug() << "DEBUG: מבצע performArrest...";
+            ActionResult result = game->performArrest(attacker, target);
+            qDebug() << "DEBUG: result.success =" << result.success;
+            qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
+
+            bool wasBlocked = false;
+
+            if (result.requiresBlocking) {
+                std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("arrest", &attacker);
+                QStringList blockers;
+                for (const auto& name : blockerNames) {
+                    blockers << QString::fromStdString(name);
+                }
+
+                qDebug() << "DEBUG: blockers =" << blockers;
+
+                wasBlocked = askForBlock(
+                    QString::fromStdString(attacker.getName()),
+                    "Arrest",
+                    blockers,
+                    QString::fromStdString(target.getName())
+                    );
+
+                if (wasBlocked) {
+                    QMessageBox::information(this, "חסימה", "הפעולה Arrest נחסמה!");
+                    game->nextTurn();
+                    updateTurnLabel();
+                    highlightCurrentPlayer();
+                    updateCoinLabel();
+                    return;
+                }
+            }
+
+            if (result.success && !wasBlocked) {
+                try {
+                    game->applyArrest(attacker, target);
+                }
+                catch (const std::exception& e) {
+                    QMessageBox::warning(this, "שגיאה בביצוע הפעולה", e.what());
+                }
+            }
+
+            actionResultLabel->setText(QString::fromStdString(result.message));
+            game->nextTurn();
+            updateTurnLabel();
+            highlightCurrentPlayer();
+            updateCoinLabel();
+        } catch (const std::exception& e) {
+            QMessageBox::warning(this, "שגיאה", e.what());
+        }
+    });
+}
+
+
 // void GameBoardWindow::handleArrest() {
 //     Player &attacker = game->getCurrentPlayer();
 //     Player &target = game->getCurrentPlayer();
@@ -599,6 +891,7 @@ void GameBoardWindow::handleBribe() {
 //     updateCoinLabel();
 // }
 //
+
 // void GameBoardWindow::handleSanction() {
 //     Player &attacker = game->getCurrentPlayer();
 //     Player &target = game->getCurrentPlayer();
@@ -609,6 +902,69 @@ void GameBoardWindow::handleBribe() {
 //     updateTurnLabel();
 //     updateCoinLabel();
 // }
+
+void GameBoardWindow::handleCoup() {
+    Player& attacker = game->getCurrentPlayer();
+    requestTargetPlayer("בחר שחקן למעצר", [this, &attacker](Player& target) {
+
+    if (attacker.isBlocked("coup")) {
+        QMessageBox::information(this, "Try other action", "Coup action is blocked for you");
+        return;
+    }
+
+    try {
+        qDebug() << "DEBUG: מבצע performCoup...";
+        ActionResult result = game->performCoup(attacker, target);
+
+        qDebug() << "DEBUG: result.success =" << result.success;
+        qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
+
+        bool wasBlocked = false;
+
+        if (result.requiresBlocking) {
+            std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("coup", &attacker);
+            QStringList blockers;
+            for (const auto& name : blockerNames) {
+                blockers << QString::fromStdString(name);
+            }
+            qDebug() << "DEBUG: blockers =" << blockers;
+
+            wasBlocked = askForBlock(
+                QString::fromStdString(attacker.getName()),
+                "Coup",
+                blockers,
+                QString::fromStdString(target.getName())
+                );
+
+                if (wasBlocked) {
+                    QMessageBox::information(this, "חסימה", "הפעולה Coup נחסמה!");
+                    game->nextTurn();
+                    updateTurnLabel();
+                    highlightCurrentPlayer();
+                    updateCoinLabel();
+                    return;
+                }
+        }
+
+        if (result.success && !wasBlocked) {
+            try {
+            game->applyCoup(attacker, target);
+            } catch (const std::exception& e) {
+                QMessageBox::warning(this, "שגיאה בביצוע הפעולה", e.what());
+            }
+        }
+
+        actionResultLabel->setText(QString::fromStdString(result.message));
+        game->nextTurn();
+        updateTurnLabel();
+        highlightCurrentPlayer();
+        updateCoinLabel();
+    } catch (const std::exception& e) {
+        QMessageBox::warning(this, "שגיאה", e.what());
+    }
+    });
+}
+
 // void GameBoardWindow::handleCoup() {
 //     Player &attacker = game->getCurrentPlayer();
 //     if (attacker.getCoins() < 7) {
@@ -714,5 +1070,43 @@ void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &
     //     // }
     // }
 }
+
+bool GameBoardWindow::askForBlock(const QString &attackerName,
+    const QString &actionName,
+    const QStringList &blockers,
+    const QString &targetName = "")
+{
+
+    for (const QString &blockerName : blockers) {
+        BlockingDialog *dialog = new BlockingDialog(attackerName, actionName, blockers, targetName,this);
+        dialog->setWindowTitle(QString(" %1  You can make a blocking").arg(blockerName));
+
+        bool blocked = false;
+        QEventLoop loop;
+
+        connect(dialog, &BlockingDialog::blockConfirmed, this, [&]() {
+            blocked = true;
+            loop.quit();
+        });
+
+        connect(dialog, &BlockingDialog::skipDeclined, this, [&]() {
+            loop.quit();
+        });
+
+        dialog->show();
+        loop.exec();  // מחכה עד שהשחקן יבחר
+
+        dialog->deleteLater();
+
+        if (blocked) {
+            // מישהו חסם – לא צריך להמשיך לבדוק
+            return true;
+        }
+    }
+
+    // אף אחד לא חסם
+    return false;
+}
+
 
 

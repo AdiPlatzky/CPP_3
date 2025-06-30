@@ -16,6 +16,7 @@
 struct ActionResult {
   bool success;
   std::string message;
+  bool requiresBlocking = false;
 };
 
 class Player;
@@ -50,13 +51,27 @@ class Game : public QObject {
 
       // פעולות
     ActionResult performGather(Player& player);
+    void applyGather(Player& player);
+
     ActionResult performTax(Player& player);
+    void applyTax(Player& player);
+
     ActionResult performBribe(Player& player);
+    void applyBribe(Player& player);
+
     ActionResult performArrest(Player& attacker, Player& terget);
+    void applyArrest(Player& attacker, Player& terget);
+
     ActionResult performSanction(Player& attacker, Player& target);
+
     ActionResult performCoup(Player& attacker, Player& target);
+    void applyCoup(Player& attacker, Player& target);
+
     ActionResult performInvest(Player& player);
-      // std::string performGather(Player& player);
+
+    std::vector<std::string> getPlayersWhoCanBlock(const std::string &actionName, const Player *attacker) const;
+
+    // std::string performGather(Player& player);
       // std::string performTax(Player& player);
       // std::string performBribe(Player& player);
       // std::string performArrest(Player& attacker, Player& terget);

@@ -3,7 +3,7 @@ CXX = g++
 
 CXXFLAGS = -Wall -Wextra -std=c++14 -g
 
-SRC = Player.cpp Game.cpp Roles/Baron.cpp Roles/General.cpp Roles/Governor.cpp Roles/Judge.cpp Roles/Merchant.cpp Roles/Spy.cpp Roles/RoleFactory.cpp GUI/PlayerRegistrationScreen.cpp GUI/InstructionsWindow.cpp GUI/GameBoardWindow.cpp GUI/MainWindow.cpp
+SRC = Player.cpp Game.cpp Roles/Baron.cpp Roles/General.cpp Roles/Governor.cpp Roles/Judge.cpp Roles/Merchant.cpp Roles/Spy.cpp Roles/RoleFactory.cpp GUI/PlayerRegistrationScreen.cpp GUI/InstructionsWindow.cpp GUI/GameBoardWindow.cpp GUI/MainWindow.cpp GUI/BlockingDialog.cpp
 
 
 TEST = Tests/Player_test.cpp Tests/Game_test.cpp Tests/Baron_test.cpp Tests/General_test.cpp Tests/Governor_test.cpp Tests/Judge_test.cpp Tests/Merchant_test.cpp Tests/Spy_test.cpp

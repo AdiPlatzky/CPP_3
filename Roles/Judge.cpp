@@ -25,3 +25,7 @@ void Judge::onSanction(Player& actor, Player&, Game& game){
   actor.removeCoins(1);
   game.addToCoinPool(1);
 }
+
+bool Judge::canBlock(const std::string &actionName) const {
+  return actionName == "bribe";
+}

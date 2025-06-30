@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include <QString>
 #include <set>
 #include <unordered_map>
 
@@ -48,5 +49,6 @@ class Player{
     bool hasBonusAction() const; // בודק האם השחקן קיבל בונוס ועדיין לא השתמש בו
     void setBonusAction(bool active); // מסמן לשחקן שהוא קיבל בונוס
     bool consumeBonusAction(); // מנסה לנצל את הבונוס (אם קיים) ומחזיר true אם הצליח
+    bool canBlock(const std::string& actionName) const;
 };
 #endif //PLAYER_H

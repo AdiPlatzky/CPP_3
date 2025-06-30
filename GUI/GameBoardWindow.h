@@ -80,12 +80,15 @@ private:
     void requestTargetForAction(std::function<ActionResult(Player&, Player&)> actionFunc);
     void resetPlayerHighlights();
     void highlightCurrentPlayer();
-
-
     void updatePlayerStatusVisuals();
+
+    void requestTargetPlayer(const QString& title,
+                         std::function<void(Player&)> callback);
+
 
     bool eventFilter(QObject *watched, QEvent *event)override;
     void addPlayerToGraveyard(const QString &name,  const QString &reason);
+    bool askForBlock(const QString &attackerName, const QString &actionName, const QStringList &blockers, const QString &targetName);
 
 
 private slots:
@@ -93,11 +96,12 @@ private slots:
     void handleGather();
     void handleTax();
     void handleBribe();
-    // void handleArrest();
-    // void handleSanction();
-    // void handleCoup();
+    void handleArrest();
+    //void handleSanction();
+    void handleCoup();
     void handleInvest();
     void handleGameEnd(const QString& winnerName);
+
 
 };
 

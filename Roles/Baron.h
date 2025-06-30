@@ -9,6 +9,7 @@
 #include <string>
 #include "../Role.h"
 
+class QString;
 class Player;
 class Game;
 

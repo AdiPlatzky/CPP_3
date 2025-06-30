@@ -28,6 +28,10 @@ class Role {
     virtual void onCoup(Player&, Player&, Game&){}
 
     virtual void onInvest(Player&, Game&){}
+
+    virtual bool canBlock(const std::string &actionName) const {
+        return false;
+    }
 };
 
 #endif //ROLE_H

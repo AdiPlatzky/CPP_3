@@ -18,3 +18,8 @@ void Spy::onArrest(Player&, Player& attacker, Game&){
   std::cout << "Spy sees " << attacker.getName() << " has " << attacker.getCoins() << " coins\n";
   attacker.blockAction("arrest",1);
 }
+
+bool Spy::canBlock(const std::string &actionName) const {
+    return actionName == "arrest";
+}
+
