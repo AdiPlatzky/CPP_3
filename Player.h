@@ -7,8 +7,6 @@
 
 #include <string>
 #include <memory>
-#include <QString>
-#include <set>
 #include <unordered_map>
 
 class Role;

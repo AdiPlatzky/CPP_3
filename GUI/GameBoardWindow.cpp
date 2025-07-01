@@ -20,66 +20,6 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-
-// GameBoardWindow::GameBoardWindow(QWidget *parent) : QWidget(parent)
-// {
-//     setWindowTitle("New Game - COUP");
-//     resize(1000, 700);
-//
-//     mainLayout = new QVBoxLayout(this);
-//
-//     homeButton = new QPushButton("🏠 Back to manu", this);
-//     connect(homeButton, &QPushButton::clicked, [=]() {
-//         auto *mainMenu = new MainWindow();
-//         mainMenu->show();
-//         this->close();
-//     });
-//     mainLayout->addWidget(homeButton);
-//
-//
-//     turnLabel = new QLabel(this);
-//     // highlightLayout = new QVBoxLayout();
-//     // mainLayout->addLayout(highlightLayout);
-//     turnLabel->setAlignment(Qt::AlignCenter);
-//     QFont font = turnLabel->font();
-//     font.setPointSize(18);
-//     turnLabel->setFont(font);
-//     mainLayout->addStretch(1);
-//     mainLayout->addWidget(turnLabel, 0, Qt::AlignHCenter);
-//     mainLayout->addStretch(1);
-//
-//
-//
-//     coinLabel = new QLabel(this);
-//     coinLabel->setAlignment(Qt::AlignCenter);
-//     QFont cFont = coinLabel->font();
-//     font.setPointSize(14);
-//     coinLabel->setFont(cFont);
-//     mainLayout->addStretch(1);
-//     //mainLayout->addWidget(coinLabel, 0, Qt::AlignHCenter);
-//     mainLayout->addStretch(1);
-//
-//     actionResultLabel = new QLabel(this);
-//     actionResultLabel->setAlignment(Qt::AlignCenter);
-//     actionResultLabel->setText("Choose action");
-//     mainLayout->addWidget(actionResultLabel);
-//
-//     // playerNames = {"Player 1", "Player 2", "Player 3", "Player 4", "Player 5", "Player 6"};
-//     // game = std::make_unique<Game>();
-//     //
-//     // for (const QString &name : playerNames) {
-//     //     auto role = RoleFactory::createRandomRole();
-//     //     auto player = std::make_shared<Player>(name.toStdString(), std::move(role));
-//     //     game->addPlayer(player);
-//     // }
-//
-//     setupPlayers();
-//     setupActions();
-//     updateTurnLabel();
-//     highlightCurrentPlayer();
-//     updateCoinLabel();
-// }
-
 GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& players, QWidget *parent)
     : QWidget(parent)
 {
@@ -115,11 +55,19 @@ GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& pla
     // הוספה לפריסת המסך
     mainLayout->addWidget(graveyardDock);
 
-    lastBlockedLabel = new QLabel("🔒 עדיין לא בוצעה חסימה");
-    mainLayout->addWidget(lastBlockedLabel);  // תוסיפי את זה איפה שאת רוצה שיראה בלוח
-    lastBlockedLabel->setAlignment(Qt::AlignCenter);
-    lastBlockedLabel->setStyleSheet("border: 1px solid black; padding: 5px; font-weight: bold;");
+    lastBlockedLabel = new QLabel("🔒 חסימות : אין שחקן חסום");
+    lastBlockedLabel->setStyleSheet("font-weight: bold; color: darkred;");
+    mainLayout->addWidget(lastBlockedLabel, 0, Qt::AlignCenter);
 
+
+    // // הוספת כותרת:
+    // QLabel* lastBlockedTitle = new QLabel("השחקן האחרון שנחסם:");
+    // lastBlockedTitle->setAlignment(Qt::AlignCenter);
+    // mainLayout->addWidget(lastBlockedTitle);
+    //
+    // // יצירת layout:
+    // lastBlockedLayout = new QVBoxLayout();
+    // mainLayout->addLayout(lastBlockedLayout);
 
     turnLabel = new QLabel(this);
     turnLabel->setAlignment(Qt::AlignCenter);
@@ -185,6 +133,24 @@ void GameBoardWindow::setupPlayers() {
     mainLayout->addLayout(highlightLayout);
 }
 
+
+void GameBoardWindow::updateBlockedArrestLabel() {
+    QString blockedText = "🔒 חסימת מעצר: ";
+    bool found = false;
+
+    for (const auto& entry : game->getPlannedArrests()) {
+        blockedText += QString::fromStdString(entry.first) + " ע\"י " + QString::fromStdString(entry.second);
+        found = true;
+        break;  // יש רק חסימה אחת בזמן נתון
+    }
+
+    if (!found)
+        blockedText += "אין שחקן חסום";
+
+    lastBlockedLabel->setText(blockedText);
+}
+
+
 void GameBoardWindow::highlightCurrentPlayer() {
     mainLayout->addStretch(2);
 
@@ -207,13 +173,6 @@ void GameBoardWindow::highlightCurrentPlayer() {
     if (playerLabelMap.contains(name)) {
         highlightPlayer = playerLabelMap[name];
     }
-    // for (int i = 0; i < game->getPlayer().size(); i++) {
-    //     if (game->getPlayer()[i].get() == &currentPlayer) {
-    //         highlightPlayer = playerLabels[i];
-    //         highlightIndex = i;
-    //         break;
-    //     }
-    // }
 
     if (highlightPlayer) {
         playerLayout->removeWidget(highlightPlayer);
@@ -222,17 +181,19 @@ void GameBoardWindow::highlightCurrentPlayer() {
         mainLayout->addStretch(2);
     }
 
-    // if (game->getCurrentPlayer().getRole()->getName() == "Spy") {
-    //     PeekButton->show();
-    // } else {
-    //     PeekButton->hide();
-    // }
-    //
-    // if (game->getCurrentPlayer().getRole()->getName() == "Baron") {
-    //     InvestButton->show();
-    // } else {
-    //     PeekButton->hide();
-    // }
+    // בדיקה אם השחקן הוא מרגל
+    if (game->getCurrentPlayer().getRole()->getName() == "Spy") {
+        if (PeekButton) PeekButton->show();
+    } else {
+        if (PeekButton) PeekButton->hide();
+    }
+
+    // בדיקה אם השחקן הוא ברון
+    if (game->getCurrentPlayer().getRole()->getName() == "Baron") {
+        if (InvestButton) InvestButton->show();
+    } else {
+        if (InvestButton) InvestButton->hide();
+    }
 }
 
 
@@ -269,18 +230,6 @@ void GameBoardWindow::updatePlayerStatusVisuals() {
     }
 }
 
-// void GameBoardWindow::setupCards() {
-//     cardLayout = new QHBoxLayout();
-//
-//     for (int i = 0; i < 2; i++) {
-//         QLabel *card = new QLabel("🔒", this);
-//         card->setStyleSheet("font-size: 48px; margin: 10px;");
-//         cardLabels.append(card);
-//         cardLayout->addWidget(card);
-//     }
-//     mainLayout->addLayout(cardLayout);
-// }
-
 void GameBoardWindow::setupActions() {
     actionLayout = new QGridLayout();
 
@@ -308,15 +257,6 @@ void GameBoardWindow::setupActions() {
     connect(InvestButton, &QPushButton::clicked, this, &GameBoardWindow::handleInvest);
     connect(PeekButton, &QPushButton::clicked, this, &GameBoardWindow::handleSpyCoins);
 
-    // if (game->getCurrentPlayer().getRole()->getName() == "Spy") {
-    //     QPushButton* spyCoinsButton = new QPushButton("Spy: הצץ במטבעות של כולם", this);
-    //     // connect(spyCoinsButton, &QPushButton::clicked, this, &GameBoardWindow::handleSpyCoins);
-    //     // actionLayout->addWidget(spyCoinsButton, 2, 0); // או מיקום אחר שתרצי
-    //     // PeekButton->hide();
-    // }
-
-
-
     actionLayout->addWidget(GatherButton, 0,0);
     actionLayout->addWidget(TaxButton, 0,1);
     actionLayout->addWidget(BribeButton, 0,2);
@@ -330,11 +270,19 @@ void GameBoardWindow::setupActions() {
     PeekButton->hide();
 
     mainLayout->addLayout(actionLayout);
-    // actionButton = new QPushButton("Make actions", this);
-    // connect(actionButton, &QPushButton::clicked, this, &GameBoardWindow::handleAction);
-    //
-    // actionLayout->addWidget(actionButton);
-    // mainLayout->addLayout(actionLayout);
+}
+
+void GameBoardWindow::showLastBlockedPlayer(const Player& player) {
+    if (lastBlockedLabel) {
+        lastBlockedLayout->removeWidget(lastBlockedLabel);
+        delete lastBlockedLabel;
+        lastBlockedLabel = nullptr;
+    }
+
+    lastBlockedLabel = new QLabel(QString::fromStdString(player.getName()));
+    lastBlockedLabel->setStyleSheet("background-color: red; color: white; padding: 6px; border-radius: 10px;");
+    lastBlockedLabel->setAlignment(Qt::AlignCenter);
+    lastBlockedLayout->addWidget(lastBlockedLabel);
 }
 
 void GameBoardWindow::handleSpyCoins() {
@@ -344,6 +292,7 @@ void GameBoardWindow::handleSpyCoins() {
         return;
     }
 
+    PeekButton->show();
     std::map<std::string, int> coinCounts = game->getPlayersCoinCounts();
     QString message;
     for (const auto& [name, coins] : coinCounts) {
@@ -361,11 +310,13 @@ void GameBoardWindow::handleSpyCoins() {
     if (choice == QMessageBox::Yes) {
         requestTargetPlayer("בחר שחקן למעצר עתידי", [this, &spy](Player& target) {
             game->markPlannedArrest(spy, target);
+            updateBlockedArrestLabel();
             QMessageBox::information(this, "הוראה התקבלה",
                 QString::fromStdString(spy.getName()) + " יתנגד למעצר של " +
                 QString::fromStdString(target.getName()) + " בתור הבא.");
         });
     }
+    PeekButton->hide();
 }
 
 void GameBoardWindow::updateTurnLabel() {
@@ -393,35 +344,7 @@ void GameBoardWindow::updateCoinLabel() {
             label->setStyleSheet("background: #DDEEFF; border: 2px solid black;");
         }
     }
-
-    if (game->getCurrentPlayer().getRole()->getName() == "Spy") {
-        PeekButton->show();
-    } else {
-        PeekButton->hide();
-    }
-
-    if (game->getCurrentPlayer().getRole()->getName() == "Baron") {
-        InvestButton->show();
-    } else {
-        PeekButton->hide();
-    }
 }
-//     const auto& playersList = game->getPlayer();
-//     for (int i = 0; i < playersList.size(); i++) {
-//         auto& player = playersList[i];
-//         QString name = QString::fromStdString(player->getName());
-//         QString role = QString::fromStdString(player->getRole()->getName());
-//         QString coins = QString::number(player->getCoins());
-//         playerLabels[i]->setText(name + " (" + role + ") - 💰" + coins);
-//
-//         if (!player->isActive()) {
-//             playerLabels[i]->setStyleSheet("background: #DDEEFF; opacity: 0.5; border: 2px solid gray;");
-//         }
-//         else {
-//             playerLabels[i]->setStyleSheet("background: #DDEEFF; border: 2px solid black;");
-//         }
-//     }
-// }
 
 
 void GameBoardWindow::animateTurnLabel() {
@@ -446,44 +369,6 @@ void GameBoardWindow::resetPlayerHighlights() {
 }
 
 
-// bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
-//     if (awaitingTargetSelection && event->type() == QEvent::MouseButtonPress) {
-//         for (auto it = playerLabelMap.begin(); it != playerLabelMap.end(); ++it) {
-//             if (watched == it.value()) {
-//                 try {
-//                     QString name = it.key();
-//                     Player& attacker = game->getCurrentPlayer();
-//
-//                     // חיפוש השחקן לפי שם (כי getPlayer() מחזיר מצביעים)
-//                     Player* targetPtr = nullptr;
-//                     for (const auto& p : game->getPlayer()) {
-//                         if (QString::fromStdString(p->getName()) == name) {
-//                             targetPtr = p.get();
-//                             break;
-//                         }
-//                     }
-//
-//                     if (!targetPtr) throw std::runtime_error("Target player not found");
-//
-//                     Player& target = *targetPtr;
-//
-//                     QString result = QString::fromStdString(pendingActionFunction(attacker, target));
-//                     actionResultLabel->setText(result);
-//                     game->nextTurn();
-//                     updateTurnLabel();
-//                     highlightCurrentPlayer();
-//                     updateCoinLabel();
-//                     updatePlayerStatusVisuals();
-//                 } catch (const std::exception& e) {
-//                     QMessageBox::warning(this, "שגיאה", e.what());
-//                 }
-//                 resetPlayerHighlights();
-//                 return true;
-//             }
-//         }
-//     }
-//     return QWidget::eventFilter(watched, event);
-// }
 bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
     if (awaitingTargetSelection && event->type() == QEvent::MouseButtonPress) {
         for (auto it = playerLabelMap.begin(); it != playerLabelMap.end(); ++it) {
@@ -545,77 +430,6 @@ void GameBoardWindow::requestTargetForAction(std::function<ActionResult(Player&,
     actionResultLabel->setText("בחר שחקן לביצוע הפעולה");
 }
 
-
-// void GameBoardWindow::handleIncome() {
-//     Player &attacker = game->getCurrentPlayer();
-//     Player &target = game->getCurrentPlayer();
-
-     //game->performGather(attacker);
-     // game->performTax(attacker);
-     //  game->performBribe(attacker);
-     //  game->performArrest(attacker,target);
-     //  game->performSanction(attacker, target);
-     //  game->performCoup(attacker, target);
-     //  game->performInvest(attacker);
-     // game->performInvest(attacker);
-
-
-    //QString result = QString::fromStdString(game->performInvest(attacker));
-
-//     actionResultLabel->setText(result);
-//     game->nextTurn();
-//     updateTurnLabel();
-//     updateCoinLabel();
-// }
-
-// void GameBoardWindow::handleGather() {
-//     // QString message;
-//     Player &attacker = game->getCurrentPlayer();
-//     // פה אני בודקת מצב שהפעולה כבר חסומה
-//     if (attacker.isBlocked("gather")) {
-//         QMessageBox::information(this, "Try author action", "Gather action is blocked for you");
-//         // updateTurnLabel();
-//         // highlightCurrentPlayer();
-//         // updateCoinLabel();
-//         return;
-//     }
-//     try {
-//         ActionResult result = game->performGather(attacker);
-//         // פה אני בודקת מצב של האפשרות לחסום פעולה אחרי שניסיתי לעשות אותה
-//         if (result.requiresBlocking) {
-//             QStringList blockers = game->getPlayersWhoCanBlock("Gather", attacker); // פונקציה שתכף נבנה
-//             bool wasBlocked = askForBlock(attacker.getName().data(), "Gather", blockers, "");
-//
-//             if (wasBlocked) {
-//                 // message = QString()
-//                 QMessageBox::information(this, "BLOCK MESSAGE",
-//                                          QString("Gather is blocked for you from %1").arg(blockers));
-//
-//                 //showMessage("הפעולה Bribe נחסמה!");
-//                 // return; // לא ממשיכים עם הפעולה
-//                 game->nextTurn();
-//             }
-//         }
-//         //QString result = QString::fromStdString(resultObj.message);
-//         // actionResultLabel->setText(result);
-//         actionResultLabel->setText(QString::fromStdString(result.message));
-//
-//         if (result.success) {
-//             game->nextTurn();
-//         }
-//
-//         //game->nextTurn();
-//         updateTurnLabel();
-//         highlightCurrentPlayer();
-//         updateCoinLabel();
-//     } catch (const std::exception& e) {
-//         QMessageBox::warning(this, "This action is blocked try other action", e.what());
-//     }
-//     // updateTurnLabel();
-//     // highlightCurrentPlayer();
-//     // updateCoinLabel();
-//     // game->nextTurn();
-// }
 
 void GameBoardWindow::requestTargetPlayer(const QString& title,
                                           std::function<void(Player&)> callback) {
@@ -695,9 +509,6 @@ void GameBoardWindow::handleGather() {
                 }
             }
 
-            // if (wasBlocked) {
-            //     QMessageBox::information(this, "חסימה", "הפעולה Gather נחסמה!");
-
                 // הצגת תוצאה
                 actionResultLabel->setText(QString::fromStdString(result.message));
                 game->nextTurn();
@@ -708,54 +519,11 @@ void GameBoardWindow::handleGather() {
             }
         }
 
-        // // הצגת תוצאה
-        // actionResultLabel->setText(QString::fromStdString(result.message));
-
-        // if (result.success) {
-        //     game->nextTurn();
-        // }
-
-        // updateTurnLabel();
-        // highlightCurrentPlayer();
-        // updateCoinLabel();
-    // }
     catch (const std::exception& e) {
         QMessageBox::warning(this, "שגיאה", e.what());
     }
 }
-//
-// void GameBoardWindow::handleTax() {
-//     Player &attacker = game->getCurrentPlayer();
-//     if (attacker.isBlocked("tax")) {
-//         QMessageBox::information(this, "Try author action", "Tax action is blocked for you");
-//         // updateTurnLabel();
-//         // highlightCurrentPlayer();
-//         // updateCoinLabel();
-//         return;
-//     }
-//
-//     try {
-//         ActionResult resultObj = game->performTax(attacker);
-//         // QString result = QString::fromStdString(resultObj.message);
-//         // actionResultLabel->setText(result);
-//         actionResultLabel->setText(QString::fromStdString(resultObj.message));
-//
-//         if (resultObj.success) {
-//             game->nextTurn();
-//         }
-//
-//         //game->nextTurn();
-//         updateTurnLabel();
-//         highlightCurrentPlayer();
-//         updateCoinLabel();
-//     } catch (const std::exception& e) {
-//         QMessageBox::warning(this, "This action is blocked", e.what());
-//     }
-//     // updateTurnLabel();
-//     // highlightCurrentPlayer();
-//     // updateCoinLabel();
-//     // game->nextTurn();
-// }
+
 
 void GameBoardWindow::handleTax() {
     Player& attacker = game->getCurrentPlayer();  // עדיין עובדים עם Player& כמו שסיכמנו
@@ -842,13 +610,6 @@ void GameBoardWindow::handleBribe() {
         qDebug() << "DEBUG: result.requiresBlocking =" << result.requiresBlocking;
 
         bool wasBlocked = false;
-
-        // QString result = QString::fromStdString(resultObj.message);
-        // actionResultLabel->setText(result);
-
-        // if (resultObj.success) {
-        //     game->nextTurn();
-        // }
 
         if (result.requiresBlocking) {
             std::vector<std::string> blockerNames = game->getPlayersWhoCanBlock("bribe", &attacker);
@@ -960,29 +721,6 @@ void GameBoardWindow::handleArrest() {
 }
 
 
-// void GameBoardWindow::handleArrest() {
-//     Player &attacker = game->getCurrentPlayer();
-//     Player &target = game->getCurrentPlayer();
-//
-//     QString result = QString::fromStdString(game->performArrest(attacker, target));
-//     actionResultLabel->setText(result);
-//     game->nextTurn();
-//     updateTurnLabel();
-//     updateCoinLabel();
-// }
-//
-
-// void GameBoardWindow::handleSanction() {
-//     Player &attacker = game->getCurrentPlayer();
-//     Player &target = game->getCurrentPlayer();
-//
-//     QString result = QString::fromStdString(game->performSanction(attacker, target));
-//     actionResultLabel->setText(result);
-//     game->nextTurn();
-//     updateTurnLabel();
-//     updateCoinLabel();
-// }
-
 void GameBoardWindow::handleCoup() {
     Player& attacker = game->getCurrentPlayer();
     requestTargetPlayer("בחר שחקן למעצר", [this, &attacker](Player& target) {
@@ -1054,31 +792,6 @@ void GameBoardWindow::handleCoup() {
     });
 }
 
-// void GameBoardWindow::handleCoup() {
-//     Player &attacker = game->getCurrentPlayer();
-//     if (attacker.getCoins() < 7) {
-//         QMessageBox::warning(this, "You have no coins to make coup (you need 7 or more coins)!", "ERROR:Coins");
-//         return;
-//     }
-//     actionResultLabel->setText("Select the player you want to eliminate");
-//     awaitingTarget = true;
-//
-//     for (int i = 0; i < playerLabels.size(); i++) {
-//         Player &target = *game->getPlayer()[i];
-//
-//         if (!target.isActive() || &target == &attacker) {
-//             continue;
-//         }
-//         playerLabels[i]->setStyleSheet("background-color: #FFCCCC; border: 3px solid red;");
-//         playerLabels[i]->installEventFilter(this);
-//     }
-//
-//     //QString result = QString::fromStdString(game->performCoup(attacker,target));
-//     //actionResultLabel->setText(result);
-//     game->nextTurn();
-//     updateTurnLabel();
-//     updateCoinLabel();
-// }
 
 void GameBoardWindow::handleInvest() {
     Player &attacker = game->getCurrentPlayer();
@@ -1116,12 +829,6 @@ void GameBoardWindow::handleGameEnd(const QString& winnerName) {
 }
 
 
-
-
-// void GameBoardWindow::closeGame() {
-//     close();  // סוגר את החלון הזה
-// }
-
 void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &reason) {
     QLabel *graveLabel = new QLabel(name, this);
     graveLabel->setStyleSheet(
@@ -1142,23 +849,8 @@ void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &
         toRemove->hide();
         playerLabelMap.remove(name);
     }
-
-    // for (int i = 0; i < playerLabels.size(); ++i) {
-    //     if (playerLabelMap.contains(name)) {
-    //         QWidget *toRemove = playerLabelMap[name];
-    //         playerLayout->removeWidget(toRemove);
-    //         toRemove->hide();
-    //         playerLabelMap.remove(name);
-    //     }
-    //     // if (playerLabels[i]->text().contains(name)) {
-    //     //     QWidget *toRemove = playerLabels[i];
-    //     //     playerLayout->removeWidget(toRemove);
-    //     //     toRemove->hide();
-    //     //     playerLabels.remove(i);
-    //     //     break;
-    //     // }
-    // }
 }
+
 
 bool GameBoardWindow::askForBlock(const QString &attackerName,
     const QString &actionName,

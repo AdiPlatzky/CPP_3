@@ -58,6 +58,8 @@ class Game : public QObject {
     void markPlannedArrest(Player& spy, Player& target);
     bool isArrestBlockedNextTurn(Player& target) const;
     void clearPlannedArrest(Player& target);
+    const std::map<std::string, std::string>& getPlannedArrests() const;
+
 
 
     ActionResult performTax(Player& player);

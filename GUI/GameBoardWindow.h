@@ -37,13 +37,14 @@ private:
     QLabel *coinLabel;
     QLabel *actionResultLabel;
     QLabel *highlightPlayer = nullptr;
-    QLabel* lastBlockedLabel; // יציג את החסימה האחרונה
+    QLabel* lastBlockedLabel = nullptr;
 
     QVBoxLayout *mainLayout;
     QHBoxLayout *playerLayout;
     QGridLayout *actionLayout;
     QHBoxLayout *cardLayout;
     QVBoxLayout *highlightLayout;
+    QVBoxLayout *lastBlockedLayout;
 
     //QVector<QLabel*> playerLabels;
     QVector<QLabel*> actionCards;
@@ -95,6 +96,9 @@ private:
     bool eventFilter(QObject *watched, QEvent *event)override;
     void addPlayerToGraveyard(const QString &name,  const QString &reason);
     bool askForBlock(const QString &attackerName, const QString &actionName, const QStringList &blockers, const QString &targetName);
+    void showLastBlockedPlayer(const Player& player);
+    void updateBlockedArrestLabel();
+
 
 
 private slots:

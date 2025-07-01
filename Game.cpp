@@ -52,6 +52,11 @@ void Game::markPlannedArrest(Player& spy, Player& target) {
   plannedArrests[target.getName()] = spy.getName();  // spy יחסום את arrest על target
 }
 
+const std::map<std::string, std::string>& Game::getPlannedArrests() const {
+  return plannedArrests;
+}
+
+
 bool Game::isArrestBlockedNextTurn(Player& target) const {
   return plannedArrests.count(target.getName()) > 0;
 }
@@ -74,22 +79,31 @@ Player& Game::getCurrentPlayer(){
 
 void Game::nextTurn(){
   if(gameOver) return;
+
   // מעבר לתור הבא
-  do{
+  do {
     currentTurnIndex = (currentTurnIndex + 1) % players.size();
   } while(!players[currentTurnIndex]->isActive());
 
   checkGameOver();
+
   // ניקוי חסימות של שחקן נוכחי
   Player& current = getCurrentPlayer();
   current.clearBlocks();
+
+  // ✨ בדיקה אם יש חסימת arrest מהמרגל
+  if (isArrestBlockedNextTurn(current)) {
+    clearPlannedArrest(current);  // מנקה את החסימה – היא תקפה רק לתור אחד
+  }
+
+  // הפעלת תכונות התחלת תור
   current.getRole()->onTurnStart(current, *this);
 
-
   if(current.getCoins() >= 10){
-    std::cout << current.getName() << "must perform a coup this turn!\n";
+    std::cout << current.getName() << " must perform a coup this turn!\n";
   }
 }
+
 
 std::string Game::getWinner() const{
   if(gameOver == false){
@@ -578,7 +592,17 @@ std::map<std::string, int> Game::getPlayersCoinCounts() const {
 std::vector<std::string> Game::getPlayersWhoCanBlock(const std::string& actionName,
                                                      const Player* attacker) const {
   std::vector<std::string> result;
-for (const auto& p : players) {
+
+  if (actionName == "arrest") {
+    // אם השחקן שביצע את הפעולה (attacker) מנסה לעצור מישהו – נבדוק אם יש חסימה מראש
+    for (const auto& entry : plannedArrests) {
+      if (entry.first == attacker->getName()) {
+        return {};  // כבר נחסם – אי אפשר לחסום שוב
+      }
+    }
+  }
+
+  for (const auto& p : players) {
     if (!p->isActive() || p.get() == attacker) continue;
     if (p->canBlock(actionName)) {
       result.push_back(p->getName());
