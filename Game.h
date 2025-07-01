@@ -35,6 +35,7 @@ class Game : public QObject {
       ~Game();
       // ניהול שחקנים
       void addPlayer(const std::shared_ptr<Player>& player);
+      Player* getPlayerByName(const std::string& name);
       const std::vector<std::shared_ptr<Player>>& getPlayer() const;
       const std::vector<std::string> getActivePlayers() const;
 
@@ -52,6 +53,12 @@ class Game : public QObject {
       // פעולות
     ActionResult performGather(Player& player);
     void applyGather(Player& player);
+    std::map<std::string, int> getPlayersCoinCounts() const;
+    std::map<std::string, std::string> plannedArrests;
+    void markPlannedArrest(Player& spy, Player& target);
+    bool isArrestBlockedNextTurn(Player& target) const;
+    void clearPlannedArrest(Player& target);
+
 
     ActionResult performTax(Player& player);
     void applyTax(Player& player);

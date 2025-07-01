@@ -37,6 +37,8 @@ private:
     QLabel *coinLabel;
     QLabel *actionResultLabel;
     QLabel *highlightPlayer = nullptr;
+    QLabel* lastBlockedLabel; // יציג את החסימה האחרונה
+
     QVBoxLayout *mainLayout;
     QHBoxLayout *playerLayout;
     QGridLayout *actionLayout;
@@ -49,6 +51,7 @@ private:
 
     QMap<QString, QLabel*> playerLabelMap; // map name → label
 
+    QPushButton *NextTurnButton;
     QPushButton *GatherButton;
     QPushButton *TaxButton;
     QPushButton *BribeButton;
@@ -57,6 +60,7 @@ private:
     QPushButton *CoupButton;
     QPushButton *InvestButton;
     QPushButton *homeButton;
+    QPushButton *PeekButton;
 
     // תוספות חדשות לבית הקברות:
     QDockWidget *graveyardDock;
@@ -68,6 +72,8 @@ private:
     std::function<ActionResult(Player&, Player&)> pendingActionFunction;
     bool awaitingTargetSelection = false;
     int highlightIndex = -1;
+
+    void handleSpyCoins();
 
     void setupPlayers();
     void setupActions();

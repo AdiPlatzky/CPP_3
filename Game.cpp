@@ -28,6 +28,16 @@ const std::vector<std::shared_ptr<Player>>& Game::getPlayer() const {
   return players;
 }
 
+Player* Game::getPlayerByName(const std::string& name) {
+  for (auto& p : players) {
+    if (p->getName() == name) {
+      return p.get();
+    }
+  }
+  return nullptr;
+}
+
+
 const std::vector<std::string> Game::getActivePlayers() const{
   std::vector<std::string> names;
   for(const auto& p : players){
@@ -37,6 +47,19 @@ const std::vector<std::string> Game::getActivePlayers() const{
   }
   return names;
 }
+
+void Game::markPlannedArrest(Player& spy, Player& target) {
+  plannedArrests[target.getName()] = spy.getName();  // spy יחסום את arrest על target
+}
+
+bool Game::isArrestBlockedNextTurn(Player& target) const {
+  return plannedArrests.count(target.getName()) > 0;
+}
+
+void Game::clearPlannedArrest(Player& target) {
+  plannedArrests.erase(target.getName());
+}
+
 
 Player& Game::getCurrentPlayer(){
   if(players.empty()){
@@ -129,18 +152,20 @@ ActionResult Game::performGather(Player& player){
   }
 
   if(player.isBlocked("gather")){
-    return {false, player.getName() + "You are bloced from gather"};
+    return {false, player.getName() + "You are blocked from gather"};
   }
-  return {true, player.getName() + "is attempting to collect gather (1 coins)", true}; // requiresBlocking = true
 
-  if(coinPool < 1){
-    throw std::runtime_error("No coins left in the pool.");
-  }
-  player.addCoins(1);
-  coinPool--;
-  checkGameOver();
-  return {true, player.getName() + " עוד יום עוד אגורה"};
+  return {true, player.getName() + "is attempting to collect gather (1 coins)", true}; // requiresBlocking = true
 }
+  // if(coinPool < 1){
+  //   throw std::runtime_error("No coins left in the pool.");
+  // }
+  // player.addCoins(1);
+  // coinPool--;
+  // checkGameOver();
+  // return {true, player.getName() + " עוד יום עוד אגורה"};
+
+
 
 void Game::applyGather(Player &player) {
   if(coinPool < 1){
@@ -150,7 +175,6 @@ void Game::applyGather(Player &player) {
   coinPool--;
   checkGameOver();
   // return {true, player.getName() + " עוד יום עוד אגורה"};
-
 }
 
 
@@ -229,9 +253,16 @@ ActionResult Game::performBribe(Player& player){
     return {false, "You must perform coup because you have a 10 or more coins...remember?"};
   }
 
+  if(player.isBlocked("bribe")){
+    return {false, "You  are blocked from bribe."};
+  }
+
   if(player.getCoins() < 4){
     return {false, "You don't have enough coins to bribe."};
   }
+
+  player.removeCoins(4);
+  coinPool += 4;
   // player.removeCoins(4);
   // coinPool += 4;
   //
@@ -279,8 +310,8 @@ void Game::applyBribe(Player& player) {
   else{
     nextTurn(); // אין בונוס או כבר נוצל
   }
-  player.removeCoins(4);
-  coinPool += 4;
+  // player.removeCoins(4);
+  // coinPool += 4;
   checkGameOver();
 }
 
@@ -297,9 +328,15 @@ ActionResult Game::performArrest(Player& attacker, Player& target){
     return {false, "You must perform coup because you have a 10 or more coins...remember?"};
   }
 
-  if (attacker.isBlocked("arrest")) {
-    return {false, "You are blocked from making arrest."};
+  // if (attacker.isBlocked("arrest")) {
+  //   return {false, "You are blocked from making arrest."};
+  // }
+
+  if (isArrestBlockedNextTurn(target)) {
+    clearPlannedArrest(target);
+    return {false, "המרגל חסם את פעולת המעצר על השחקן הזה בתורו!"};
   }
+
 
   if(!target.isActive()){
     return {false, "The target player is inactive! \n Try another player from the game."};
@@ -457,6 +494,8 @@ ActionResult Game::performCoup(Player& attacker, Player& target){
   if(attacker.getCoins() < 7){
     return {false, "You don't have enough coins to perform coup."};
   }
+  attacker.removeCoins(7);
+  coinPool += 7;
   checkGameOver();
   return {true, attacker.getName() + " is attempting to collect coup (killing " + target.getName() + ")", true}; // requiresBlocking = true
 
@@ -504,8 +543,8 @@ void Game::applyCoup(Player &attacker, Player &target) {
     emit playerEliminated(
       QString::fromStdString(target.getName()), "הודח בהפיכה על ידי " + QString::fromStdString(attacker.getName()));
   }
-  attacker.removeCoins(7);
-  coinPool += 7;
+  // attacker.removeCoins(7);
+  // coinPool += 7;
   checkGameOver();
   // return {true, attacker.getName() + "You killed: " + target.getName(), true};
 }
@@ -524,6 +563,17 @@ ActionResult Game::performInvest(Player& player) {
   checkGameOver();
   return {true, player.getName() + "השקעה טובה ברון"};
 }
+
+std::map<std::string, int> Game::getPlayersCoinCounts() const {
+  std::map<std::string, int> result;
+  for (const auto& p : players) {
+    if (p->isActive()) {
+      result[p->getName()] = p->getCoins();
+    }
+  }
+  return result;
+}
+
 
 std::vector<std::string> Game::getPlayersWhoCanBlock(const std::string& actionName,
                                                      const Player* attacker) const {
