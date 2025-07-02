@@ -321,20 +321,34 @@ void GameBoardWindow::handleSpyCoins() {
 
 void GameBoardWindow::updateTurnLabel() {
     turnLabel->setText("Player turn: " + QString::fromStdString(game->getCurrentPlayer().getName()));
-    // animateTurnLabel();
+
 }
+
+
 void GameBoardWindow::updateCoinLabel() {
+    const std::string& currentPlayerName = game->getCurrentPlayer().getName();
+
     for (const auto& playerPtr : game->getPlayer())
     {
         QString name = QString::fromStdString(playerPtr->getName());
+
         if (!playerLabelMap.contains(name)) continue;
 
-        QString role = QString::fromStdString(playerPtr->getRole()->getName());
-        QString coins = QString::number(playerPtr->getCoins());
-
         QLabel *label = playerLabelMap[name];
-        label->setText(name + " (" + role + ") - 💰" + coins);
 
+
+        if (playerPtr->getName() == currentPlayerName) {
+            // זה השחקן שבתורו – נחשוף את המידע המלא
+            QString role = QString::fromStdString(playerPtr->getRole()->getName());
+            QString coins = QString::number(playerPtr->getCoins());
+            label->setText(name + " (" + role + ") - 💰" + coins);
+        }
+        else {
+            // שחקן אחר – נסתיר את המידע
+            label->setText(name + " (??) - 🔒??");
+        }
+
+        // עיצוב
         if (!playerPtr->isActive())
         {
             label->setStyleSheet("background: #DDEEFF; opacity: 0.5; border: 2px solid gray;");
@@ -859,7 +873,7 @@ bool GameBoardWindow::askForBlock(const QString &attackerName,
 {
 
     for (const QString &blockerName : blockers) {
-        BlockingDialog *dialog = new BlockingDialog(attackerName, actionName, blockers, targetName,this);
+        BlockingDialog *dialog = new BlockingDialog(attackerName, actionName,  QStringList() << blockerName, targetName,this);
         dialog->setWindowTitle(QString(" %1  You can make a blocking").arg(blockerName));
 
         bool blocked = false;

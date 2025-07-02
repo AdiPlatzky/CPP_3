@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 project(CoupGame)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# מציאת Qt5
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
+# מוצא את ספריית Qt
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
-# הוספת תיקיות header אם יש קבצי include בין תיקיות
+# תיקיות include
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/GUI
@@ -17,7 +17,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/Tests
 )
 
-# קבצי המקור
+# קבצי מקור
 set(SOURCE_COMMON
         Game.cpp
         Player.cpp
@@ -49,8 +49,12 @@ set(TEST_SOURCES
 
 # בניית המשחק הראשי
 add_executable(CoupGame GUI/main.cpp ${SOURCE_COMMON})
-target_link_libraries(CoupGame Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(CoupGame Qt6::Widgets)
 
-# בניית הבדיקות (אם רוצים)
-add_executable(TestGame ${TEST_SOURCES} ${SOURCE_COMMON})
-target_link_libraries(TestGame Qt5::Core Qt5::Gui Qt5::Widgets)
+# בניית הבדיקות
+add_executable(TestGame ${SOURCE_COMMON} ${TEST_SOURCES})
+target_link_libraries(TestGame Qt6::Widgets)
+
+# תצורת מערכת הבדיקות (ctest)
+enable_testing()
+add_test(NAME RunAllTests COMMAND TestGame)
