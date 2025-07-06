@@ -1,63 +1,68 @@
-# מאת: 12adi45@gmail.com
-CXX = g++
+CXX      = g++
+CXXFLAGS = -Wall -Wextra -std=c++17 -g `pkg-config --cflags Qt6Widgets`
+LDFLAGS  = `pkg-config --libs Qt6Widgets`
+MOC      = moc-qt6
 
-# הגדרות קומפילציה עם Qt
-CXXFLAGS = -Wall -Wextra -std=c++17 -g $(shell pkg-config --cflags Qt6Widgets)
-LDFLAGS = $(shell pkg-config --libs Qt6Widgets)
+SRC_COMMON = \
+    Game.cpp Player.cpp \
+    Roles/Governor.cpp Roles/Baron.cpp Roles/Spy.cpp Roles/General.cpp \
+    Roles/Judge.cpp Roles/Merchant.cpp Roles/RoleFactory.cpp \
+    GUI/MainWindow.cpp GUI/GameBoardWindow.cpp GUI/InstructionsWindow.cpp \
+    GUI/PlayerRegistrationScreen.cpp GUI/BlockingDialog.cpp
 
-# קבצי קוד
-SRC = \
-	Player.cpp Game.cpp \
-	Roles/Baron.cpp Roles/General.cpp Roles/Governor.cpp Roles/Judge.cpp \
-	Roles/Merchant.cpp Roles/Spy.cpp Roles/RoleFactory.cpp \
-	GUI/PlayerRegistrationScreen.cpp GUI/InstructionsWindow.cpp \
-	GUI/GameBoardWindow.cpp GUI/MainWindow.cpp GUI/BlockingDialog.cpp
+# הקובץ הראשי למצב GUI
+GUI_MAIN_SRC = GUI/main.cpp
+
+# הקובץ הראשי למצב קונסולה
+CONSOLE_MAIN_SRC = main.cpp
 
 # קבצי טסטים
-TEST_SRC = \
-	Tests/Baron_test.cpp Tests/Game_test.cpp Tests/General_test.cpp \
-	Tests/Governor_test.cpp Tests/Judge_test.cpp \
-	Tests/Merchant_test.cpp Tests/Player_test.cpp Tests/Spy_test.cpp
+TEST_SRCS = \
+    Tests/Baron_test.cpp Tests/Game_test.cpp Tests/General_test.cpp \
+    Tests/Governor_test.cpp Tests/Judge_test.cpp Tests/Merchant_test.cpp \
+    Tests/Player_test.cpp Tests/Spy_test.cpp
 
-# כיווני include
-INCLUDES = -I. -I./GUI -I./Roles -I./Tests
+# קבצי header עם Q_OBJECT (איתור אוטומטי)
+QOBJECT_HDRS := $(shell grep -rl 'Q_OBJECT' . | grep '\.h$$' | sed 's|^\./||')
+MOC_SRCS     := $(QOBJECT_HDRS:.h=.moc.cpp)
 
-# קובץ main של המשחק
-MAIN = GUI/main.cpp
+# כלל ליצירת קבצי moc
+%.moc.cpp: %.h
+	$(MOC) $< -o $@
 
-# שמות קבצי הבינארי
-TARGET_MAIN = run_main
-TARGET_TEST = run_test
+MAIN_EXEC  = CoupGame
+CONSOLE_EXEC = console
+TEST_EXEC  = TestGame
 
-.PHONY: all main test run-main run-test clean valgrind
+all: $(MAIN_EXEC)
 
-all: $(TARGET_MAIN) $(TARGET_TEST)
+# הפעלת מצב GUI
+$(MAIN_EXEC): $(GUI_MAIN_SRC) $(SRC_COMMON) $(MOC_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# בניית המשחק
-$(TARGET_MAIN): $(SRC) $(MAIN)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
+# הפעלת מצב קונסולה
+$(CONSOLE_EXEC): $(CONSOLE_MAIN_SRC) $(SRC_COMMON) $(MOC_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# בניית הבדיקות
-$(TARGET_TEST): $(SRC) $(TEST_SRC)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
 
-# הרצת המשחק
-run-main: $(TARGET_MAIN)
-	./$(TARGET_MAIN)
+# טסטים
+$(TEST_EXEC): $(SRC_COMMON) $(TEST_SRCS) $(MOC_SRCS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# הרצת הבדיקות
-run-test: $(TARGET_TEST)
-	./$(TARGET_TEST)
+gui: $(MAIN_EXEC)
+	./$(MAIN_EXEC)
 
-# קיצורים
-main: run-main
-test: run-test
+main: $(CONSOLE_EXEC)
+	./$(CONSOLE_EXEC)
 
-# בדיקת זליגות זיכרון
-valgrind: $(TARGET_TEST)
-	valgrind --leak-check=full ./$(TARGET_TEST)
+test: $(TEST_EXEC)
+	./$(TEST_EXEC)
 
-# ניקיון
+valgrind: $(MAIN_EXEC)
+	valgrind --leak-check=full ./$(MAIN_EXEC)
+
 clean:
-	rm -f $(TARGET_MAIN) $(TARGET_TEST)
-	rm -rf build/ cmake-build-*/ *.o
+	rm -f $(MAIN_EXEC) $(CONSOLE_EXEC) $(TEST_EXEC) *.moc.cpp GUI/*.moc.cpp Roles/*.moc.cpp
+
+.PHONY: all gui main test valgrind clean
+

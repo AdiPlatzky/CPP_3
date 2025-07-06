@@ -29,7 +29,7 @@ class Role {
 
     virtual void onInvest(Player&, Game&){}
 
-    virtual bool canBlock(const std::string &actionName) const {
+    virtual bool canBlock(const std::string &) const {
         return false;
     }
 };

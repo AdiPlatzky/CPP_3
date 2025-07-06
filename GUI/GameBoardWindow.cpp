@@ -835,6 +835,7 @@ void GameBoardWindow::handleInvest() {
 
 }
 
+//################
 void GameBoardWindow::handleGameEnd(const QString& winnerName) {
     QMessageBox::information(this, "Winner!!", winnerName + "Is winner in the game!!");
     auto *mainMenu = new MainWindow();
@@ -842,7 +843,7 @@ void GameBoardWindow::handleGameEnd(const QString& winnerName) {
     this->close();
 }
 
-
+//################
 void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &reason) {
     QLabel *graveLabel = new QLabel(name, this);
     graveLabel->setStyleSheet(
@@ -865,7 +866,7 @@ void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &
     }
 }
 
-
+//################
 bool GameBoardWindow::askForBlock(const QString &attackerName,
     const QString &actionName,
     const QStringList &blockers,

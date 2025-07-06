@@ -123,9 +123,14 @@ TEST_CASE("Game - sanction and coup edge cases") {
     CHECK(p2->isActive());
 
     p1->addCoins(6);
-    game.performCoup(*p1, *p2);
-    CHECK_FALSE(p2->isActive());
+    auto coupResult = game.performCoup(*p1, *p2);
+    CHECK(coupResult.success);         // לוודא שהפעולה חוקית
+    CHECK(coupResult.requiresBlocking); // לוודא שיש אפשרות חסימה
+    CHECK(p2->isActive());             // עדיין פעיל עד שנפעיל apply!
+    game.applyCoup(*p1, *p2);          // *זה השלב החדש*
+    CHECK_FALSE(p2->isActive());       // עכשיו הוא אמור להיות מודח
 }
+
 
 TEST_CASE("Game - invest with current player") {
     Game game;

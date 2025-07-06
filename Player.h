@@ -48,5 +48,9 @@ class Player{
     void setBonusAction(bool active); // מסמן לשחקן שהוא קיבל בונוס
     bool consumeBonusAction(); // מנסה לנצל את הבונוס (אם קיים) ומחזיר true אם הצליח
     bool canBlock(const std::string& actionName) const;
+    bool bribeUsedThisTurn = false;
+    void setBribeUsedThisTurn(bool val) { bribeUsedThisTurn = val; }
+    bool hasUsedBribeThisTurn() const { return bribeUsedThisTurn; }
+
 };
 #endif //PLAYER_H

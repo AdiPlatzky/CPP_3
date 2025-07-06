@@ -10,8 +10,6 @@
 #include <string>
 #include <map>
 
-#include "Roles/RoleFactory.h"
-
 Game::Game(QObject *parent) : QObject(parent){}
 Game::~Game(){}
 
@@ -102,6 +100,9 @@ void Game::nextTurn(){
   if(current.getCoins() >= 10){
     std::cout << current.getName() << " must perform a coup this turn!\n";
   }
+
+  current.setBribeUsedThisTurn(false);
+
 }
 
 
@@ -126,10 +127,14 @@ void Game::addToCoinPool(int coin){
 }
 
 bool Game::isGameOver() const{
-  if(players.size() > 1){
-     return false;
+  int active = 0;
+  for(const auto& p : players) {
+    if(p->isActive()) {
+      active++;
+    }
+    return active <= 1;
   }
-  return true;
+  return active;
 }
 
 void Game::checkGameOver(){
@@ -171,13 +176,6 @@ ActionResult Game::performGather(Player& player){
 
   return {true, player.getName() + "is attempting to collect gather (1 coins)", true}; // requiresBlocking = true
 }
-  // if(coinPool < 1){
-  //   throw std::runtime_error("No coins left in the pool.");
-  // }
-  // player.addCoins(1);
-  // coinPool--;
-  // checkGameOver();
-  // return {true, player.getName() + " עוד יום עוד אגורה"};
 
 
 
@@ -188,7 +186,6 @@ void Game::applyGather(Player &player) {
   player.addCoins(1);
   coinPool--;
   checkGameOver();
-  // return {true, player.getName() + " עוד יום עוד אגורה"};
 }
 
 
@@ -209,25 +206,6 @@ ActionResult Game::performTax(Player& player){
   if(player.isBlocked("tax")){
     return {false, "You  are blocked from takes."};
   }
-
-  // for(auto& p : players){
-  //   if(p.get() != &player && p->isActive()){
-  //     p->getRole()->onTax(player, *p, *this);
-  //   }
-  // }
-  //
-  // player.getRole()->onTax(player, player, *this);
-  //
-  // int baseCoins = 2;
-  // if(coinPool < baseCoins){
-  //   return {false, "Not enough coins in the pool."};
-  // }
-  //
-  // player.addCoins(baseCoins);
-  // coinPool -= baseCoins;
-  // checkGameOver();
-  //
-  // return {true, player.getName() + " עוד יום עוד 2 אגורות ", true};
   return {true, player.getName() + "is attempting to collect taxes (2 coins)", true}; // requiresBlocking = true
 }
 
@@ -249,8 +227,6 @@ void Game::applyTax(Player& player) {
   player.addCoins(baseCoins);
   coinPool -= baseCoins;
   checkGameOver();
-
-  // return {true, player.getName() + " עוד יום עוד 2 אגורות ", true};
 }
 
 
@@ -271,36 +247,21 @@ ActionResult Game::performBribe(Player& player){
     return {false, "You  are blocked from bribe."};
   }
 
+  if (player.hasUsedBribeThisTurn()) {
+    throw std::runtime_error("Cannot bribe twice in the same turn!");
+  }
+  player.setBribeUsedThisTurn(true);
+
   if(player.getCoins() < 4){
     return {false, "You don't have enough coins to bribe."};
   }
 
   player.removeCoins(4);
   coinPool += 4;
-  // player.removeCoins(4);
-  // coinPool += 4;
-  //
-  // // כאן ניתן לכל שחקן להזדמנות לחסום את השוחד
-  // for(auto& otherPlayer : players){
-  //   if(otherPlayer.get() != &player && otherPlayer->isActive()){
-  //     otherPlayer->getRole()->onBribe(player, *otherPlayer, *this);
-  //   }
-  // }
-  // // אם עדיין פעיל, מסמן שהשחקן קיבל תור נוסף
-  // if(player.isActive()){
-  //   player.setBonusAction(true);  // זכאי לבונוס רק אם לא נחסם
-  // }
-  //
-  // if(player.hasBonusAction()){
-  //   // תור נוסף מותר
-  //   player.consumeBonusAction(); // מנצל אותו
-  // }
-  // else{
-  //   nextTurn(); // אין בונוס או כבר נוצל
-  // }
   checkGameOver();
   return {true, player.getName() + "איזה יופי קיבלת בשוחד עוד תור", true};
 }
+
 
 void Game::applyBribe(Player& player) {
   // כאן ניתן לכל שחקן להזדמנות לחסום את השוחד
@@ -324,10 +285,9 @@ void Game::applyBribe(Player& player) {
   else{
     nextTurn(); // אין בונוס או כבר נוצל
   }
-  // player.removeCoins(4);
-  // coinPool += 4;
   checkGameOver();
 }
+
 
 ActionResult Game::performArrest(Player& attacker, Player& target){
   if(!attacker.isActive()){
@@ -342,9 +302,6 @@ ActionResult Game::performArrest(Player& attacker, Player& target){
     return {false, "You must perform coup because you have a 10 or more coins...remember?"};
   }
 
-  // if (attacker.isBlocked("arrest")) {
-  //   return {false, "You are blocked from making arrest."};
-  // }
 
   if (isArrestBlockedNextTurn(target)) {
     clearPlannedArrest(target);
@@ -352,9 +309,10 @@ ActionResult Game::performArrest(Player& attacker, Player& target){
   }
 
 
-  if(!target.isActive()){
-    return {false, "The target player is inactive! \n Try another player from the game."};
+  if (!target.isActive()) {
+    throw std::runtime_error("Target player is inactive! Try another player.");
   }
+
 
   if(attacker.getName() == target.getName() && &attacker == &target){
     return {false, "Seriously?! Were you planning on arresting yourself? Its not possible to make sanction yourself in this game..."};
@@ -371,62 +329,11 @@ ActionResult Game::performArrest(Player& attacker, Player& target){
   }
   checkGameOver();
   return {true, attacker.getName() + " is attempting to collect (1 coin) from" + target.getName() + "."};
-  //
-  // if(!target.isActive()){
-  //   return {false, "The target player is inactive! \n Try another player from the game."};
-  // }
-  //
-  // if(attacker.isBlocked("arrest")){
-  //   return {false, "You are blocked in this turn, try other active"};
-  // }
-  //
-  // if(attacker.getName() == target.getName() && &attacker == &target){
-  //   return {false, "Seriously?! Were you planning on arresting yourself? Its not possible to make sanction yourself in this game..."};
-  // }
-  // // בדיקה אם arrest חוזר על עצמו
-  // auto key = std::make_pair(attacker.getName(), target.getName());
-  // if(arrestHistory[key] == currentTurnIndex){
-  //   return {false, "Cannot arrest same player twice in a row."};
-  // }
-  //
-  // if(target.getCoins() == 0){
-  //   return {false, "Target has no coins."};
-  // }
-  // // לוקח ממנו מטבע
-  // target.removeCoins(1);
-  // attacker.addCoins(1);
-  // // הפעלת תגובת תפקידים
-  // target.getRole()->onArrest(target, attacker, *this);
-  //
-  // // עדכון היסטוריית arrest
-  // arrestHistory[key] = currentTurnIndex;
-  // checkGameOver();
-  // return {true, attacker.getName() + "שיחקת אותה קיבלת מטבע מ - " + target.getName(), true};
+
 }
 
 void Game::applyArrest(Player& attacker, Player& target) {
   auto key = std::make_pair(attacker.getName(), target.getName());
-
-  // if(!target.isActive()){
-  //   return {false, "The target player is inactive! \n Try another player from the game."};
-  // }
-
-  // if(attacker.isBlocked("arrest")){
-  //   return {false, "You are blocked in this turn, try other active"};
-  // }
-
-  // if(attacker.getName() == target.getName() && &attacker == &target){
-  //   return {false, "Seriously?! Were you planning on arresting yourself? Its not possible to make sanction yourself in this game..."};
-  // }
-  // // בדיקה אם arrest חוזר על עצמו
-  // auto key = std::make_pair(attacker.getName(), target.getName());
-  // if(arrestHistory[key] == currentTurnIndex){
-  //   return {false, "Cannot arrest same player twice in a row."};
-  // }
-  //
-  // if(target.getCoins() == 0){
-  //   return {false, "Target has no coins."};
-  // }
 
   for (auto& p : players) {
     if (p.get() != &attacker && p->isActive()) {
@@ -438,14 +345,10 @@ void Game::applyArrest(Player& attacker, Player& target) {
   // לוקח ממנו מטבע
   target.removeCoins(1);
   attacker.addCoins(1);
-  // הפעלת תגובת תפקידים
-  // target.getRole()->onArrest(target, attacker, *this);
 
   // עדכון היסטוריית arrest
   arrestHistory[key] = currentTurnIndex;
   checkGameOver();
-  // return {true, attacker.getName() + "שיחקת אותה קיבלת מטבע מ - " + target.getName(), true};
-
 }
 
 ActionResult Game::performSanction(Player& attacker, Player& target){
@@ -461,8 +364,8 @@ ActionResult Game::performSanction(Player& attacker, Player& target){
     return {false, "You must perform coup because you have a 10 or more coins...remember?"};
   }
 
-  if(!target.isActive()){
-    return {false, "The target player is inactive! \n Try another player from the game."};
+  if (!target.isActive()) {
+    throw std::runtime_error("Target player is inactive! Try another player.");
   }
 
   if(attacker.getName() == target.getName() && &attacker == &target){
@@ -484,6 +387,7 @@ ActionResult Game::performSanction(Player& attacker, Player& target){
   return {true, attacker.getName() + "is attempting to collect sanction (the " + target.getName() + " is blocked from taking Gather/Tax for 1 turn)", true};
 }
 
+
 ActionResult Game::performCoup(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -493,9 +397,10 @@ ActionResult Game::performCoup(Player& attacker, Player& target){
     throw std::runtime_error("It's not your turn!");
   }
 
-  if(!target.isActive()){
-    return {false, "The target player is inactive! \n Try another player from the game."};
+  if (!target.isActive()) {
+    throw std::runtime_error("Target player is inactive! Try another player.");
   }
+
 
   if(attacker.getName() == target.getName() && &attacker == &target){
     return {false, "Seriously?! Were you planning on kill yourself? Dont worry, It's not possible in this game...you are protected!"};
@@ -512,33 +417,10 @@ ActionResult Game::performCoup(Player& attacker, Player& target){
   coinPool += 7;
   checkGameOver();
   return {true, attacker.getName() + " is attempting to collect coup (killing " + target.getName() + ")", true}; // requiresBlocking = true
-
-  // if(attacker.getCoins() < 7){
-  //   return {false, "You don't have enough coins to perform coup."};
-  // }
-  // attacker.removeCoins(7);
-  // coinPool += 7;
-  //
-  //
-  // // הפעלת תגובת הגנה של ה־target (למשל General)
-  // target.getRole()->onCoup(target, attacker, *this);
-  //
-  // // אם עדיין פעיל – לא נחסם, ולכן מדיחים אותו
-  // if(target.isActive()){
-  //   target.deactivate();  // כאן הוא הופך ל־isActive = false
-  //   emit playerEliminated(
-  //     QString::fromStdString(target.getName()), "הודח בהפיכה על ידי " + QString::fromStdString(attacker.getName()));
-  // }
-  // checkGameOver();
-  // return {true, attacker.getName() + "You killed: " + target.getName(), true};
 }
 
+
 void Game::applyCoup(Player &attacker, Player &target) {
-  // if(attacker.getCoins() < 7){
-  //   return {false, "You don't have enough coins to perform coup."};
-  // }
-
-
   for (auto& p : players) {
     if (p.get() != &attacker && p->isActive()) {
       p->getRole()->onCoup(attacker, target, *this);
@@ -547,20 +429,13 @@ void Game::applyCoup(Player &attacker, Player &target) {
 
   attacker.getRole()->onCoup(attacker, target, *this);
 
-
-  // // הפעלת תגובת הגנה של ה־target (למשל General)
-  // target.getRole()->onCoup(target, attacker, *this);
-
   // אם עדיין פעיל – לא נחסם, ולכן מדיחים אותו
   if(target.isActive()){
     target.deactivate();  // כאן הוא הופך ל־isActive = false
     emit playerEliminated(
       QString::fromStdString(target.getName()), "הודח בהפיכה על ידי " + QString::fromStdString(attacker.getName()));
   }
-  // attacker.removeCoins(7);
-  // coinPool += 7;
   checkGameOver();
-  // return {true, attacker.getName() + "You killed: " + target.getName(), true};
 }
 
 
