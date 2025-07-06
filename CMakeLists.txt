@@ -34,6 +34,10 @@ set(SOURCE_COMMON
         GUI/PlayerRegistrationScreen.cpp
         GUI/BlockingDialog.cpp
         GUI/AutoDemoWindow.cpp
+        GUI/AutoPlayerSetupWindow.cpp
+        GUI/AutoGameWindow.cpp
+
+
 )
 
 # קבצי בדיקות

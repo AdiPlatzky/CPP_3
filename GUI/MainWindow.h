@@ -16,19 +16,19 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     //~MainWindow();
 
-private slots:
-    //void openNewGame();
-    void openInstructions();
+    private slots:
+        //void openNewGame();
+        void openInstructions();
     void openPlayerRegistration(); // כדי לפתוח את המסך לבחירת שחקנים
     void startGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players); //  כשסיימנו לבחור שחקנים, נתחיל משחק איתם
-    void openAutoDemo(); // אפשרות חדשה למשחק אוטומטי
+    void openAutoPlayerSetup(); // פתיחת מסך הגדרת שחקנים למשחק אוטומטי
+    void startAutoGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players, bool showActions); // התחלת משחק אוטומטי
 
 private:
     QPushButton *newGameButton;
+    QPushButton *autoDemoButton; // כפתור חדש
     QPushButton *instructionsButton;
     QVBoxLayout *layout;
-    QPushButton *autoDemoButton; // כפתור חדש
-
 };
 
 #endif // MAINWINDOW_H

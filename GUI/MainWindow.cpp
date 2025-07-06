@@ -2,19 +2,22 @@
 #include "InstructionsWindow.h"
 #include "GameBoardWindow.h"
 #include "PlayerRegistrationScreen.h"
+#include "AutoPlayerSetupWindow.h"
 #include "AutoDemoWindow.h"
 #include <QPushButton>
 #include <QVBoxLayout>
-
+#include <QLabel>
+#include <QFont>
 #include <QWidget>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
-  setWindowTitle("תפריט ראשי - Coup");
-    resize(400, 350);
+  setWindowTitle("🎭 COUP - תפריט ראשי");
+  resize(400, 350);
 
+  // Set background color
   setStyleSheet("background-color: #ecf0f1;");
 
   layout = new QVBoxLayout(this);
@@ -40,25 +43,25 @@ MainWindow::MainWindow(QWidget *parent)
 
   newGameButton = new QPushButton("🎮 משחק חדש (שחקנים אמיתיים)", this);
   newGameButton->setStyleSheet(
-     "QPushButton {"
-     "  background-color: #27ae60;"
-     "  color: white;"
-     "  font-size: 16px;"
-     "  font-weight: bold;"
-     "  padding: 15px;"
-     "  border: none;"
-     "  border-radius: 8px;"
-     "  margin: 5px;"
-     "}"
-     "QPushButton:hover {"
-     "  background-color: #2ecc71;"
-     "}"
-     "QPushButton:pressed {"
-     "  background-color: #229954;"
-     "}"
-   );
+    "QPushButton {"
+    "  background-color: #27ae60;"
+    "  color: white;"
+    "  font-size: 16px;"
+    "  font-weight: bold;"
+    "  padding: 15px;"
+    "  border: none;"
+    "  border-radius: 8px;"
+    "  margin: 5px;"
+    "}"
+    "QPushButton:hover {"
+    "  background-color: #2ecc71;"
+    "}"
+    "QPushButton:pressed {"
+    "  background-color: #229954;"
+    "}"
+  );
 
-  autoDemoButton = new QPushButton("🤖 דמונסטרציה אוטומטית", this);
+  autoDemoButton = new QPushButton("🤖 משחק אוטומטי (בינה מלאכותית)", this);
   autoDemoButton->setStyleSheet(
     "QPushButton {"
     "  background-color: #3498db;"
@@ -77,7 +80,6 @@ MainWindow::MainWindow(QWidget *parent)
     "  background-color: #2980b9;"
     "}"
   );
-
 
   instructionsButton = new QPushButton("📖 הוראות משחק", this);
   instructionsButton->setStyleSheet(
@@ -103,18 +105,20 @@ MainWindow::MainWindow(QWidget *parent)
   layout->addWidget(autoDemoButton);
   layout->addWidget(instructionsButton);
 
+  // Add some spacing at the bottom
   layout->addStretch();
 
-  QLabel *infoLabel = new QLabel("💡 הדמונסטרציה האוטומטית מציגה משחק מלא עם הסברים", this);
+  // Add info label
+  QLabel *infoLabel = new QLabel("💡 במשחק האוטומטי - הבינה המלאכותית משחקת במקומך", this);
   infoLabel->setWordWrap(true);
   infoLabel->setStyleSheet("color: #7f8c8d; font-size: 12px; margin: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;");
   layout->addWidget(infoLabel);
 
+  // Connect signals - only once!
   connect(newGameButton, &QPushButton::clicked, this, &MainWindow::openPlayerRegistration);
-  connect(autoDemoButton, &QPushButton::clicked, this, &MainWindow::openAutoDemo);
+  connect(autoDemoButton, &QPushButton::clicked, this, &MainWindow::openAutoPlayerSetup);
   connect(instructionsButton, &QPushButton::clicked, this, &MainWindow::openInstructions);
 }
-
 
 void MainWindow::openPlayerRegistration() {
     auto *registrationScreen = new PlayerRegistrationScreen();
@@ -130,8 +134,17 @@ void MainWindow::startGameWithPlayers(const std::vector<std::shared_ptr<Player>>
   this->close();
 }
 
-void MainWindow::openAutoDemo() {
-  auto *autoDemoWindow = new AutoDemoWindow();
+void MainWindow::openAutoPlayerSetup() {
+  auto *autoSetupWindow = new AutoPlayerSetupWindow();
+  autoSetupWindow->show();
+  this->hide();
+
+  connect(autoSetupWindow, &AutoPlayerSetupWindow::playersConfigured,
+          this, &MainWindow::startAutoGameWithPlayers);
+}
+
+void MainWindow::startAutoGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players, bool showActions) {
+  auto *autoDemoWindow = new AutoDemoWindow(players, showActions);
   autoDemoWindow->show();
   this->close();
 }
