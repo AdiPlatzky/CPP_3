@@ -18,13 +18,14 @@ void Judge::onBribe(Player& actor, Player&, Game&){
   actor.setBonusAction(false); // מבטל את תור הבונוס
 }
 
-void Judge::onSanction(Player& actor, Player&, Game& game){
-  if(actor.getCoins() < 1){
-    std::cout << "Attacker cannot pay the Judge penalty";
+void Judge::onSanction(Player& actor, Player&, Game& game) {
+  if (actor.getCoins() < 1) {
+    throw std::runtime_error("Not enough coins.");
   }
   actor.removeCoins(1);
   game.addToCoinPool(1);
 }
+
 
 bool Judge::canBlock(const std::string &actionName) const {
   return actionName == "bribe";

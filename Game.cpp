@@ -9,12 +9,25 @@
 #include <stdexcept>
 #include <string>
 #include <map>
-
+/**
+ * בונה מופע חדש של מחלקת Game.
+ * @param parent מצביע לאובייקט האב (משמש ל־GUI, ברירת מחדל nullptr)
+ */
 Game::Game(QObject *parent) : QObject(parent){}
+
+/**
+ * הורס את מופע המשחק. אין צורך בשחרור משאבים מיוחד כי כל השחקנים מנוהלים ע"י מצביעים חכמים.
+ */
 Game::~Game(){}
 
 static std::map<std::pair<std::string, std::string>, int> arrestHistory;
 
+/**
+ * מוסיף שחקן למשחק.
+ * זורק חריגה אם המשחק כבר נגמר.
+ * @param player מצביע חכם לשחקן חדש
+ * @throws std::runtime_error אם מנסים להוסיף שחקן אחרי שהמשחק הסתיים
+ */
 void Game::addPlayer(const std::shared_ptr<Player>& player){
   if(gameOver){
     throw std::runtime_error("Cannot add player after game has ended.");
@@ -22,10 +35,18 @@ void Game::addPlayer(const std::shared_ptr<Player>& player){
   this->players.push_back(player);
 }
 
+/**
+ * מחזיר וקטור קבוע של כל השחקנים (פעילים ומודחים).
+ */
 const std::vector<std::shared_ptr<Player>>& Game::getPlayer() const {
   return players;
 }
 
+/**
+ * מאתר שחקן לפי שם ומחזיר מצביע. אם לא נמצא, מחזיר nullptr.
+ * @param name שם לחיפוש
+ * @return מצביע לשחקן או nullptr אם לא נמצא
+ */
 Player* Game::getPlayerByName(const std::string& name) {
   for (auto& p : players) {
     if (p->getName() == name) {
@@ -35,7 +56,10 @@ Player* Game::getPlayerByName(const std::string& name) {
   return nullptr;
 }
 
-
+/**
+ * מחזיר רשימה של כל השמות של השחקנים הפעילים במשחק.
+ * @return וקטור שמות
+ */
 const std::vector<std::string> Game::getActivePlayers() const{
   std::vector<std::string> names;
   for(const auto& p : players){
@@ -46,24 +70,46 @@ const std::vector<std::string> Game::getActivePlayers() const{
   return names;
 }
 
+/**
+ * מסמן חסימת arrest עתידית – כאשר שחקן מסוג Spy בוחר שחקן אחר לחסימה בתור הבא.
+ * @param spy המרגל
+ * @param target השחקן שייחסם
+ */
 void Game::markPlannedArrest(Player& spy, Player& target) {
   plannedArrests[target.getName()] = spy.getName();  // spy יחסום את arrest על target
 }
 
+/**
+ * מחזיר רפרנס למפה של כל החסימות העתידיות (קריאה בלבד).
+ * @return map של שם שחקן לחוסם
+ */
 const std::map<std::string, std::string>& Game::getPlannedArrests() const {
   return plannedArrests;
 }
 
-
+/**
+ * בודק אם לשחקן יש חסימת arrest תקפה לתור הקרוב.
+ * @param target שחקן לבדיקה
+ * @return true אם יש חסימה, אחרת false
+ */
 bool Game::isArrestBlockedNextTurn(Player& target) const {
   return plannedArrests.count(target.getName()) > 0;
 }
 
+/**
+ * מנקה חסימת arrest עתידית מהשחקן הנתון (ברגע שנגמרה/נוצלה).
+ * @param target שחקן
+ */
 void Game::clearPlannedArrest(Player& target) {
   plannedArrests.erase(target.getName());
 }
 
-
+/**
+ * מחזיר רפרנס לשחקן הנוכחי בתור.
+ * מדלג על שחקנים מודחים עד שנמצא שחקן פעיל.
+ * @return רפרנס לשחקן
+ * @throws std::runtime_error אם אין שחקנים במשחק
+ */
 Player& Game::getCurrentPlayer(){
   if(players.empty()){
     throw std::runtime_error("No player in the game.");
@@ -75,6 +121,10 @@ Player& Game::getCurrentPlayer(){
   return *players[currentTurnIndex];
 }
 
+/**
+ * עובר לתור הבא. מדלג על שחקנים מודחים.
+ * מאפס חסימות/בונוסים של השחקן החדש ומבצע בדיקות אוטומטיות (כמו forced coup).
+ */
 void Game::nextTurn(){
   if(gameOver) return;
 
@@ -105,7 +155,10 @@ void Game::nextTurn(){
 
 }
 
-
+/**
+ * מחזיר את שם המנצח (הפעיל האחרון).
+ * @throws std::runtime_error אם המשחק טרם הסתיים או אין מנצח.
+ */
 std::string Game::getWinner() const{
   if(gameOver == false){
     throw std::runtime_error("Game is not over yet.");
@@ -118,25 +171,39 @@ std::string Game::getWinner() const{
   throw std::runtime_error("No active player found.");
 }
 
+/**
+ * מחזיר הפניה לערך הקופה המרכזית.
+ * @return רפרנס למשתנה הקופה
+ */
 int& Game::getCoinPool(){
   return coinPool;
 }
 
+/**
+ * מוסיף ערך למספר המטבעות בקופה המרכזית.
+ * @param coin מספר המטבעות להוסיף
+ */
 void Game::addToCoinPool(int coin){
   this->coinPool += coin;
 }
 
-bool Game::isGameOver() const{
+/**
+ * בודק האם המשחק הסתיים (אם נשאר שחקן פעיל יחיד).
+ * @return true אם הסתיים, אחרת false
+ */
+bool Game::isGameOver() const {
   int active = 0;
   for(const auto& p : players) {
     if(p->isActive()) {
       active++;
     }
-    return active <= 1;
   }
-  return active;
+  return active <= 1;
 }
 
+/**
+ * מבצע בדיקה האם המשחק נגמר – מסמן אם כן ומשדר סיגנל.
+ */
 void Game::checkGameOver(){
   int activeCount = 0;
   for(const auto& p : players){
@@ -157,6 +224,11 @@ void Game::checkGameOver(){
 }
 
 // הגדרת פעולות
+/**
+ * פונקציה בודקת האם שחקן יכול לבצע gather, ומחזירה תוצאה (כולל חסימות/שגיאות).
+ * @param player שחקן
+ * @return תוצאת הפעולה
+ */
 ActionResult Game::performGather(Player& player){
   if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -178,7 +250,11 @@ ActionResult Game::performGather(Player& player){
 }
 
 
-
+/**
+ * מממש בפועל את פעולת gather – מוסיף מטבע לשחקן ומוריד מהקופה.
+ * @param player השחקן המבצע
+ * @throws std::runtime_error אם אין מטבעות בקופה
+ */
 void Game::applyGather(Player &player) {
   if(coinPool < 1){
     throw std::runtime_error("No coins left in the pool.");
@@ -189,7 +265,11 @@ void Game::applyGather(Player &player) {
 }
 
 
-
+/**
+ * בודק אם ניתן לבצע tax, ומחזיר תוצאת פעולה.
+ * @param player שחקן
+ * @return תוצאה
+ */
 ActionResult Game::performTax(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -209,6 +289,11 @@ ActionResult Game::performTax(Player& player){
   return {true, player.getName() + "is attempting to collect taxes (2 coins)", true}; // requiresBlocking = true
 }
 
+/**
+ * מממש בפועל את גביית המיסים – מוסיף לשחקן ומוריד מהקופה, מפעיל אפקטים של תפקידים.
+ * @param player שחקן
+ * @throws std::runtime_error אם אין מספיק מטבעות בקופה
+ */
 void Game::applyTax(Player& player) {
   int baseCoins = 2;
 
@@ -229,7 +314,11 @@ void Game::applyTax(Player& player) {
   checkGameOver();
 }
 
-
+/**
+ * בודק האם ניתן לבצע פעולה bribe, ומחזיר תוצאה (כולל שגיאות וחסימות).
+ * @param player שחקן
+ * @return תוצאת פעולה
+ */
 ActionResult Game::performBribe(Player& player){
  if(!player.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -262,7 +351,10 @@ ActionResult Game::performBribe(Player& player){
   return {true, player.getName() + "איזה יופי קיבלת בשוחד עוד תור", true};
 }
 
-
+/**
+ * מממש את פעולת השוחד בפועל – מפעיל אפשרות לבונוס, חסימות, עדכון תור.
+ * @param player שחקן
+ */
 void Game::applyBribe(Player& player) {
   // כאן ניתן לכל שחקן להזדמנות לחסום את השוחד
   for (auto& p : players) {
@@ -288,7 +380,12 @@ void Game::applyBribe(Player& player) {
   checkGameOver();
 }
 
-
+/**
+ * בודק אם ניתן לבצע arrest, כולל חסימות עתידיות, ומחזיר תוצאה.
+ * @param attacker התוקף
+ * @param target הנעצור
+ * @return תוצאה
+ */
 ActionResult Game::performArrest(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -332,6 +429,11 @@ ActionResult Game::performArrest(Player& attacker, Player& target){
 
 }
 
+/**
+ * מממש את פעולת המעצר בפועל – לוקח מטבע, מעדכן היסטוריה.
+ * @param attacker התוקף
+ * @param target המותקף
+ */
 void Game::applyArrest(Player& attacker, Player& target) {
   auto key = std::make_pair(attacker.getName(), target.getName());
 
@@ -351,6 +453,12 @@ void Game::applyArrest(Player& attacker, Player& target) {
   checkGameOver();
 }
 
+/**
+ * בודק אם ניתן לבצע סנקציה (sanction).
+ * @param attacker התוקף
+ * @param target הקורבן
+ * @return תוצאת פעולה
+ */
 ActionResult Game::performSanction(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -387,7 +495,12 @@ ActionResult Game::performSanction(Player& attacker, Player& target){
   return {true, attacker.getName() + "is attempting to collect sanction (the " + target.getName() + " is blocked from taking Gather/Tax for 1 turn)", true};
 }
 
-
+/**
+ * בודק אם ניתן לבצע הפיכה (coup), כולל תנאי חוקי, ומחזיר תוצאה.
+ * @param attacker תוקף
+ * @param target קורבן
+ * @return תוצאת פעולה
+ */
 ActionResult Game::performCoup(Player& attacker, Player& target){
   if(!attacker.isActive()){
     throw std::runtime_error("This player is Inactive!");
@@ -419,7 +532,11 @@ ActionResult Game::performCoup(Player& attacker, Player& target){
   return {true, attacker.getName() + " is attempting to collect coup (killing " + target.getName() + ")", true}; // requiresBlocking = true
 }
 
-
+/**
+ * מממש את פעולת ההפיכה – מדיח שחקן מהמשחק ומפעיל סיגנל ל־GUI.
+ * @param attacker תוקף
+ * @param target מודח
+ */
 void Game::applyCoup(Player &attacker, Player &target) {
   for (auto& p : players) {
     if (p.get() != &attacker && p->isActive()) {
@@ -438,7 +555,11 @@ void Game::applyCoup(Player &attacker, Player &target) {
   checkGameOver();
 }
 
-
+/**
+ * בודק אם ברון יכול להשקיע – ואם כן, מבצע את פעולת ההשקעה עבור הברון.
+ * @param player הברון
+ * @return תוצאה
+ */
 ActionResult Game::performInvest(Player& player) {
   if(!player.isActive()){
     throw std::runtime_error("Dear Baron you are Inactive - yours game is over!");
@@ -453,6 +574,10 @@ ActionResult Game::performInvest(Player& player) {
   return {true, player.getName() + "השקעה טובה ברון"};
 }
 
+/**
+ * מחזיר map של שמות שחקנים פעילים ומספר המטבעות שיש לכל אחד.
+ * @return מפת שם→מטבעות
+ */
 std::map<std::string, int> Game::getPlayersCoinCounts() const {
   std::map<std::string, int> result;
   for (const auto& p : players) {
@@ -464,19 +589,22 @@ std::map<std::string, int> Game::getPlayersCoinCounts() const {
 }
 
 
+/**
+ * מחזיר רשימה של שמות שחקנים שיכולים לחסום פעולה מסוימת (לפי סוג הפעולה).
+ * @param actionName שם הפעולה
+ * @param attacker תוקף
+ * @return וקטור שמות
+ */
 std::vector<std::string> Game::getPlayersWhoCanBlock(const std::string& actionName,
                                                      const Player* attacker) const {
   std::vector<std::string> result;
-
   if (actionName == "arrest") {
-    // אם השחקן שביצע את הפעולה (attacker) מנסה לעצור מישהו – נבדוק אם יש חסימה מראש
     for (const auto& entry : plannedArrests) {
       if (entry.first == attacker->getName()) {
-        return {};  // כבר נחסם – אי אפשר לחסום שוב
+        return {};
       }
     }
   }
-
   for (const auto& p : players) {
     if (!p->isActive() || p.get() == attacker) continue;
     if (p->canBlock(actionName)) {
@@ -485,5 +613,4 @@ std::vector<std::string> Game::getPlayersWhoCanBlock(const std::string& actionNa
   }
   return result;
 }
-
 

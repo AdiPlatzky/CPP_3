@@ -11,25 +11,14 @@
 #include "Spy.h"
 #include <cstdlib>
 #include <ctime>
+#include <stdexcept>
 
 #include "../Player.h"
 
-// std::unique_ptr<Role> RoleFactory::createRole(Player &player) {
-//   std::string role = player.getName();
-//   switch(role){
-//     case "Baron": return std::make_unique<Baron>();
-//     case "General": return std::make_unique<General>();
-//     case "Governor": return std::make_unique<Governor>();
-//     case "Judge": return std::make_unique<Judge>();
-//     case "Merchant": return std::make_unique<Merchant>();
-//     case "Spy": return std::make_unique<Spy>();
-//     default: std::make_unique<Baron>();
-//   }
-// }
 
 
 
-std::unique_ptr<Role> RoleFactory::createRandomRole(){
+std::unique_ptr<Role> RoleFactory::createRandomRole() {
   static bool seeded = false;
   if(!seeded){
     std::srand(std::time(nullptr));
@@ -43,6 +32,7 @@ std::unique_ptr<Role> RoleFactory::createRandomRole(){
     case 3: return std::make_unique<Judge>();
     case 4: return std::make_unique<Merchant>();
     case 5: return std::make_unique<Spy>();
-    default: std::make_unique<Baron>();
+    default:
+      throw std::runtime_error("Unknown role generated in RoleFactory!");
   }
 }

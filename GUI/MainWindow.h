@@ -21,11 +21,14 @@ private slots:
     void openInstructions();
     void openPlayerRegistration(); // כדי לפתוח את המסך לבחירת שחקנים
     void startGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players); //  כשסיימנו לבחור שחקנים, נתחיל משחק איתם
+    void openAutoDemo(); // אפשרות חדשה למשחק אוטומטי
 
 private:
     QPushButton *newGameButton;
     QPushButton *instructionsButton;
     QVBoxLayout *layout;
+    QPushButton *autoDemoButton; // כפתור חדש
+
 };
 
 #endif // MAINWINDOW_H

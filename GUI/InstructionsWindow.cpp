@@ -12,7 +12,7 @@ InstructionsWindow::InstructionsWindow(QWidget *parent) : QWidget(parent) {
   setWindowTitle("הוראות משחק");
   resize(400, 300);
 
-  auto *label = new QVBoxLayout(this);
+  //auto *label = new QVBoxLayout(this);
   auto *instruction = new QTextEdit(this);
   instruction->setReadOnly(true);
   instruction->setText("Welcome to COUP! \n כאן יופיעו הוראות המשחק");

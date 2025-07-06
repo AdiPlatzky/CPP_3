@@ -1,8 +1,6 @@
 #include <stdexcept>
 #include "doctest.h"
 #include "../Player.h"
-#include "../Roles/Merchant.h"
-#include "../Roles/Judge.h"
 #include "../Role.h"
 
 // Dummy role for independence
@@ -104,4 +102,223 @@ TEST_CASE("Player bonus action logic") {
 
     p.setBonusAction(false);
     CHECK_FALSE(p.hasBonusAction());
+}
+
+TEST_CASE("Player - Construction and Basic Operations") {
+    SUBCASE("Valid player construction") {
+        auto role = std::make_unique<DummyRole>();
+        Player p("TestPlayer", std::move(role));
+        CHECK(p.getName() == "TestPlayer");
+        CHECK(p.getCoins() == 0);
+        CHECK(p.isActive() == true);
+        CHECK(p.getRole()->getName() == "Dummy");
+    }
+
+    SUBCASE("Player with null role throws exception") {
+        CHECK_THROWS_AS(Player("Player", nullptr), std::invalid_argument);
+    }
+
+    SUBCASE("Player with empty name") {
+        auto role = std::make_unique<DummyRole>();
+        Player p("", std::move(role));
+        CHECK(p.getName() == "");
+        CHECK(p.isActive() == true);
+    }
+
+    SUBCASE("Player with very long name") {
+        std::string longName(1000, 'A');
+        auto role = std::make_unique<DummyRole>();
+        Player p(longName, std::move(role));
+        CHECK(p.getName() == longName);
+    }
+
+    SUBCASE("Player with special characters in name") {
+        auto role = std::make_unique<DummyRole>();
+        Player p("!@#$%^&*()", std::move(role));
+        CHECK(p.getName() == "!@#$%^&*()");
+    }
+}
+
+TEST_CASE("Player - Coin Management") {
+    auto role = std::make_unique<DummyRole>();
+    Player p("TestPlayer", std::move(role));
+
+    SUBCASE("Add coins normally") {
+        p.addCoins(5);
+        CHECK(p.getCoins() == 5);
+        p.addCoins(3);
+        CHECK(p.getCoins() == 8);
+    }
+
+    SUBCASE("Add zero coins") {
+        p.addCoins(0);
+        CHECK(p.getCoins() == 0);
+    }
+
+    SUBCASE("Add negative coins throws exception") {
+        CHECK_THROWS_AS(p.addCoins(-1), std::invalid_argument);
+        CHECK_THROWS_AS(p.addCoins(-100), std::invalid_argument);
+    }
+
+    SUBCASE("Remove coins normally") {
+        p.addCoins(10);
+        p.removeCoins(3);
+        CHECK(p.getCoins() == 7);
+        p.removeCoins(7);
+        CHECK(p.getCoins() == 0);
+    }
+
+    SUBCASE("Remove more coins than available") {
+        p.addCoins(5);
+        CHECK_THROWS_AS(p.removeCoins(6), std::runtime_error);
+        CHECK_THROWS_AS(p.removeCoins(10), std::runtime_error);
+    }
+
+    SUBCASE("Remove coins from player with zero coins") {
+        CHECK_THROWS_AS(p.removeCoins(1), std::runtime_error);
+    }
+
+    SUBCASE("Large coin operations") {
+        p.addCoins(999999);
+        CHECK(p.getCoins() == 999999);
+        p.removeCoins(500000);
+        CHECK(p.getCoins() == 499999);
+    }
+}
+
+TEST_CASE("Player - Activation and Deactivation") {
+    auto role = std::make_unique<DummyRole>();
+    Player p("TestPlayer", std::move(role));
+
+    SUBCASE("Player starts active") {
+        CHECK(p.isActive() == true);
+    }
+
+    SUBCASE("Deactivate player") {
+        p.deactivate();
+        CHECK(p.isActive() == false);
+    }
+
+    SUBCASE("Deactivate already inactive player") {
+        p.deactivate();
+        p.deactivate(); // Should not throw
+        CHECK(p.isActive() == false);
+    }
+
+    SUBCASE("Player can still manage coins after deactivation") {
+        p.addCoins(10);
+        p.deactivate();
+        CHECK(p.getCoins() == 10);
+        p.addCoins(5);
+        CHECK(p.getCoins() == 15);
+        p.removeCoins(3);
+        CHECK(p.getCoins() == 12);
+    }
+}
+
+TEST_CASE("Player - Action Blocking System") {
+    auto role = std::make_unique<DummyRole>();
+    Player p("TestPlayer", std::move(role));
+
+    SUBCASE("Block action for one turn") {
+        p.blockAction("gather", 1);
+        CHECK(p.isBlocked("gather") == true);
+        CHECK(p.isBlocked("tax") == false);
+    }
+
+    SUBCASE("Block action for multiple turns") {
+        p.blockAction("tax", 3);
+        CHECK(p.isBlocked("tax") == true);
+        p.clearBlocks();
+        CHECK(p.isBlocked("tax") == true); // Still blocked for 2 more turns
+        p.clearBlocks();
+        CHECK(p.isBlocked("tax") == true); // Still blocked for 1 more turn
+        p.clearBlocks();
+        CHECK(p.isBlocked("tax") == false); // Now unblocked
+    }
+
+    SUBCASE("Block multiple actions") {
+        p.blockAction("gather", 1);
+        p.blockAction("tax", 2);
+        p.blockAction("bribe", 3);
+        CHECK(p.isBlocked("gather") == true);
+        CHECK(p.isBlocked("tax") == true);
+        CHECK(p.isBlocked("bribe") == true);
+        CHECK(p.isBlocked("arrest") == false);
+    }
+
+    SUBCASE("Clear blocks properly") {
+        p.blockAction("gather", 1);
+        p.blockAction("tax", 2);
+        p.clearBlocks();
+        CHECK(p.isBlocked("gather") == false);
+        CHECK(p.isBlocked("tax") == true);
+        p.clearBlocks();
+        CHECK(p.isBlocked("tax") == false);
+    }
+
+    SUBCASE("Block with zero turns") {
+        p.blockAction("gather", 0);
+        CHECK(p.isBlocked("gather") == false);
+    }
+
+    SUBCASE("Block same action multiple times") {
+        p.blockAction("gather", 1);
+        p.blockAction("gather", 2); // Should overwrite
+        CHECK(p.isBlocked("gather") == true);
+        p.clearBlocks();
+        CHECK(p.isBlocked("gather") == true); // Still blocked for 1 more turn
+    }
+}
+
+TEST_CASE("Player - Bonus Action System") {
+    auto role = std::make_unique<DummyRole>();
+    Player p("TestPlayer", std::move(role));
+
+    SUBCASE("No bonus action initially") {
+        CHECK(p.hasBonusAction() == false);
+        CHECK(p.consumeBonusAction() == false);
+    }
+
+    SUBCASE("Set and consume bonus action") {
+        p.setBonusAction(true);
+        CHECK(p.hasBonusAction() == true);
+        CHECK(p.consumeBonusAction() == true);
+        CHECK(p.hasBonusAction() == false);
+        CHECK(p.consumeBonusAction() == false);
+    }
+
+    SUBCASE("Set bonus action to false") {
+        p.setBonusAction(true);
+        p.setBonusAction(false);
+        CHECK(p.hasBonusAction() == false);
+    }
+
+    SUBCASE("Multiple bonus action sets") {
+        p.setBonusAction(true);
+        p.setBonusAction(true); // Should reset
+        CHECK(p.hasBonusAction() == true);
+        CHECK(p.consumeBonusAction() == true);
+        CHECK(p.hasBonusAction() == false);
+    }
+}
+
+TEST_CASE("Player - Bribe Usage Tracking") {
+    auto role = std::make_unique<DummyRole>();
+    Player p("TestPlayer", std::move(role));
+
+    SUBCASE("Initially no bribe used") {
+        CHECK(p.hasUsedBribeThisTurn() == false);
+    }
+
+    SUBCASE("Set bribe used") {
+        p.setBribeUsedThisTurn(true);
+        CHECK(p.hasUsedBribeThisTurn() == true);
+    }
+
+    SUBCASE("Reset bribe usage") {
+        p.setBribeUsedThisTurn(true);
+        p.setBribeUsedThisTurn(false);
+        CHECK(p.hasUsedBribeThisTurn() == false);
+    }
 }

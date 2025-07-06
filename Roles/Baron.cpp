@@ -5,7 +5,6 @@
 #include "Baron.h"
 #include "../Player.h"
 #include "../Game.h"
-#include "../Role.h"
 
 Baron::Baron(){}
 Baron::~Baron(){}
@@ -13,6 +12,7 @@ Baron::~Baron(){}
 std::string Baron::getName() const {
     return "Baron";
 }
+
 void Baron::onSanction(Player& player, Player&, Game&){
   player.addCoins(1);
 }

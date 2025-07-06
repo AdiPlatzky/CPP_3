@@ -1,7 +1,3 @@
-//
-// 12adi45@gmail.com
-//
-
 #ifndef GAME_H
 #define GAME_H
 
@@ -12,84 +8,268 @@
 #include <optional>
 #include <QObject>
 #include <limits>
+#include <map>
 
+/**
+ * תוצאה של ביצוע פעולה במשחק (האם הצליח, הודעה, האם נדרש חסימה)
+ */
 struct ActionResult {
-  bool success;
-  std::string message;
-  bool requiresBlocking = false;
+  bool success; ///< האם הפעולה הצליחה
+  std::string message; ///< הודעה טקסטואלית לתוצאה
+  bool requiresBlocking = false; ///< האם דרושה אפשרות חסימה
 };
 
 class Player;
+
+/**
+ * מחלקה זו מנהלת את כל לוגיקת המשחק – תורות, שחקנים, פעולות, קופה, חסימות, סיום משחק ועוד.
+ * כל פונקציה, פעולה ושדה מתועדים במדויק בהתאם להנחיות.
+ */
 class Game : public QObject {
     Q_OBJECT
 
-
   private:
+    /**
+     * וקטור של כל השחקנים במשחק (פעילים ומודחים)
+     */
     std::vector<std::shared_ptr<Player>> players;
+
+    /**
+     * אינדקס של השחקן שבתור הנוכחי
+     */
     int currentTurnIndex = 0;
+
+    /**
+     * ערך קופת המטבעות המרכזית של המשחק
+     */
     int coinPool = std::numeric_limits<int>::max();
+
+    /**
+     * האם המשחק נגמר (true כשנשאר שחקן אחד)
+     */
     bool gameOver = false;
 
-    public:
-      Game(QObject* parent = nullptr);
-      ~Game();
-      // ניהול שחקנים
-      void addPlayer(const std::shared_ptr<Player>& player);
-      Player* getPlayerByName(const std::string& name);
-      const std::vector<std::shared_ptr<Player>>& getPlayer() const;
-      const std::vector<std::string> getActivePlayers() const;
+  public:
+    /**
+     * בונה משחק חדש. פרמטר parent אופציונלי – משמש ל־GUI.
+     */
+    Game(QObject* parent = nullptr);
 
-      // תור
-      Player& getCurrentPlayer();
-      void nextTurn();
-      bool isGameOver() const;
-      std::string getWinner() const; // זכייה
-      // תוספת לשימוש פנימי
-      int& getCoinPool();  // קופה מרכזית
-      void addToCoinPool(int coinPool); // להוסיף לקופה המרכזית
-      void checkGameOver();
+    /**
+     * הורס את המשחק. לא נדרש טיפול מיוחד.
+     */
+    ~Game();
 
+    /**
+     * מוסיף שחקן למשחק.
+     * @param player מצביע חכם לשחקן להוספה
+     * @throws std::runtime_error אם מנסים להוסיף שחקן אחרי שהמשחק נגמר
+     */
+    void addPlayer(const std::shared_ptr<Player>& player);
 
-      // פעולות
+    /**
+     * מחפש שחקן לפי שם.
+     * @param name שם השחקן
+     * @return מצביע לשחקן או nullptr אם לא קיים
+     */
+    Player* getPlayerByName(const std::string& name);
+
+    /**
+     * מחזיר וקטור של כל השחקנים (כולל מודחים)
+     * @return וקטור מצביעים חכמים לשחקנים
+     */
+    const std::vector<std::shared_ptr<Player>>& getPlayer() const;
+
+    /**
+     * מחזיר וקטור של שמות כל השחקנים הפעילים (שלא הודחו).
+     * @return וקטור שמות של שחקנים פעילים
+     */
+    const std::vector<std::string> getActivePlayers() const;
+
+    /**
+     * מחזיר הפניה לשחקן שבתור הנוכחי (כלומר, זה שיכול לפעול עכשיו).
+     * @return רפרנס לאובייקט Player של השחקן הנוכחי
+     * @throws std::runtime_error אם אין שחקנים במשחק
+     */
+    Player& getCurrentPlayer();
+
+    /**
+     * עובר לשחקן הבא (הבא בתור שהוא פעיל).
+     * @note אם לא נשארו שחקנים פעילים – לא עושה כלום
+     */
+    void nextTurn();
+
+    /**
+     * בודק האם המשחק נגמר (כלומר נשאר שחקן פעיל יחיד).
+     * @return true אם המשחק נגמר, אחרת false
+     */
+    bool isGameOver() const;
+
+    /**
+     * מחזיר את שם המנצח (הפעיל האחרון) במשחק.
+     * @return שם המנצח
+     * @throws std::runtime_error אם המשחק טרם הסתיים
+     */
+    std::string getWinner() const;
+
+    /**
+     * מחזיר הפניה לערך הקופה המרכזית (מאפשר גישה/שינוי למטבעות).
+     * @return רפרנס למשתנה הקופה
+     */
+    int& getCoinPool();
+
+    /**
+     * מוסיף ערך לקופה המרכזית.
+     * @param coinPool מספר המטבעות להוסיף
+     */
+    void addToCoinPool(int coinPool);
+
+    /**
+     * מבצע בדיקה האם המשחק נגמר – אם כן, מסמן ויוצר אות מתאים.
+     */
+    void checkGameOver();
+
+    /**
+     * פעולה: איסוף (gather). בודק אם מותר לבצע ומחזיר תוצאה.
+     * @param player השחקן שמנסה לבצע פעולה
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performGather(Player& player);
+
+    /**
+     * מממש את פעולת האיסוף בפועל (מוסיף מטבע, מוריד מהקופה).
+     * @param player השחקן שמבצע את האיסוף
+     */
     void applyGather(Player& player);
-    std::map<std::string, int> getPlayersCoinCounts() const;
-    std::map<std::string, std::string> plannedArrests;
-    void markPlannedArrest(Player& spy, Player& target);
-    bool isArrestBlockedNextTurn(Player& target) const;
-    void clearPlannedArrest(Player& target);
-    const std::map<std::string, std::string>& getPlannedArrests() const;
 
-
-
+    /**
+     * פעולה: גביית מיסים (tax).
+     * @param player השחקן שמנסה לבצע פעולה
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performTax(Player& player);
+
+    /**
+     * מממש את פעולת גביית המיסים בפועל (מוסיף מטבעות, בודק חסימות).
+     * @param player השחקן שמבצע את הפעולה
+     */
     void applyTax(Player& player);
 
+    /**
+     * פעולה: שוחד (bribe).
+     * @param player השחקן שמנסה לבצע פעולה
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performBribe(Player& player);
+
+    /**
+     * מממש את פעולת השוחד בפועל (מחלק בונוס/תור נוסף).
+     * @param player השחקן שמבצע את השוחד
+     */
     void applyBribe(Player& player);
 
-    ActionResult performArrest(Player& attacker, Player& terget);
-    void applyArrest(Player& attacker, Player& terget);
+    /**
+     * פעולה: מעצר (arrest).
+     * @param attacker התוקף
+     * @param target הנעצור
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
+    ActionResult performArrest(Player& attacker, Player& target);
 
+    /**
+     * מממש את פעולת המעצר בפועל (מעביר מטבע, רושם היסטוריה).
+     * @param attacker התוקף
+     * @param target הנעצור
+     */
+    void applyArrest(Player& attacker, Player& target);
+
+    /**
+     * פעולה: סנקציה (sanction).
+     * @param attacker התוקף
+     * @param target הנפגע
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performSanction(Player& attacker, Player& target);
 
+    /**
+     * פעולה: הפיכה (coup).
+     * @param attacker התוקף
+     * @param target הקורבן
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performCoup(Player& attacker, Player& target);
+
+    /**
+     * מממש את פעולת ההפיכה בפועל (מודח שחקן מהמשחק).
+     * @param attacker התוקף
+     * @param target הקורבן
+     */
     void applyCoup(Player& attacker, Player& target);
 
+    /**
+     * פעולה: השקעה (ברון).
+     * @param player הברון שמבצע השקעה
+     * @return תוצאה הכוללת האם הצליח, הודעה, האם ניתן לחסום
+     */
     ActionResult performInvest(Player& player);
 
+    /**
+     * מחזיר שמות כל השחקנים שיכולים לחסום פעולה מסוימת.
+     * @param actionName שם הפעולה
+     * @param attacker השחקן המפעיל
+     * @return וקטור שמות של שחקנים שיכולים לחסום
+     */
     std::vector<std::string> getPlayersWhoCanBlock(const std::string &actionName, const Player *attacker) const;
 
-    // std::string performGather(Player& player);
-      // std::string performTax(Player& player);
-      // std::string performBribe(Player& player);
-      // std::string performArrest(Player& attacker, Player& terget);
-      // std::string performSanction(Player& attacker, Player& target);
-      // std::string performCoup(Player& attacker, Player& target);
-      // std::string performInvest(Player& player);
+    /**
+     * מחזיר מפת שמות שחקנים ומספר המטבעות שיש לכל אחד (רק פעילים).
+     * @return map שם->מטבעות
+     */
+    std::map<std::string, int> getPlayersCoinCounts() const;
 
-    signals:
+    /**
+     * מפת חסימות arrest עתידיות (ע"י המרגל). key: שם המוחסם, value: שם המרגל
+     */
+    std::map<std::string, std::string> plannedArrests;
+
+    /**
+     * מסמן חסימת arrest עתידית.
+     * @param spy המרגל החוסם
+     * @param target השחקן שייחסם במעצר בתור הבא
+     */
+    void markPlannedArrest(Player& spy, Player& target);
+
+    /**
+     * בודק האם יש לשחקן חסימת arrest עתידית.
+     * @param target שחקן לבדיקה
+     * @return true אם יש חסימה עתידית, אחרת false
+     */
+    bool isArrestBlockedNextTurn(Player& target) const;
+
+    /**
+     * מנקה חסימת arrest עתידית.
+     * @param target שחקן
+     */
+    void clearPlannedArrest(Player& target);
+
+    /**
+     * מחזיר הפניה לכל מפת החסימות (לקריאה בלבד).
+     * @return map של כל החסימות
+     */
+    const std::map<std::string, std::string>& getPlannedArrests() const;
+
+signals:
+    /**
+     * סיגנל שמודיע ל־GUI שהמשחק נגמר ויש מנצח
+     * @param winnerName שם המנצח
+     */
     void gameOverSignal(const QString& winnerName);
+
+    /**
+     * סיגנל שמודיע ל־GUI ששחקן הודח מהמשחק (כולל סיבה).
+     * @param playerName שם המודח
+     * @param reason הסיבה
+     */
     void playerEliminated(const QString& playerName, const QString& reason);
 
 };

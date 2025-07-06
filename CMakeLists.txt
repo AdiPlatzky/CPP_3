@@ -33,6 +33,7 @@ set(SOURCE_COMMON
         GUI/InstructionsWindow.cpp
         GUI/PlayerRegistrationScreen.cpp
         GUI/BlockingDialog.cpp
+        GUI/AutoDemoWindow.cpp
 )
 
 # קבצי בדיקות
@@ -45,6 +46,9 @@ set(TEST_SOURCES
         Tests/Merchant_test.cpp
         Tests/Player_test.cpp
         Tests/Spy_test.cpp
+        Tests/Action_test.cpp
+        Tests/EdgeCase_test.cpp
+        Tests/Integration_test.cpp
 )
 
 # בניית המשחק הראשי

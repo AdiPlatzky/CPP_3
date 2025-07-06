@@ -8,7 +8,8 @@ SRC_COMMON = \
     Roles/Governor.cpp Roles/Baron.cpp Roles/Spy.cpp Roles/General.cpp \
     Roles/Judge.cpp Roles/Merchant.cpp Roles/RoleFactory.cpp \
     GUI/MainWindow.cpp GUI/GameBoardWindow.cpp GUI/InstructionsWindow.cpp \
-    GUI/PlayerRegistrationScreen.cpp GUI/BlockingDialog.cpp
+    GUI/PlayerRegistrationScreen.cpp GUI/BlockingDialog.cpp GUI/AutoDemoWindow.cpp
+
 
 # הקובץ הראשי למצב GUI
 GUI_MAIN_SRC = GUI/main.cpp
@@ -20,7 +21,7 @@ CONSOLE_MAIN_SRC = main.cpp
 TEST_SRCS = \
     Tests/Baron_test.cpp Tests/Game_test.cpp Tests/General_test.cpp \
     Tests/Governor_test.cpp Tests/Judge_test.cpp Tests/Merchant_test.cpp \
-    Tests/Player_test.cpp Tests/Spy_test.cpp
+    Tests/Player_test.cpp Tests/Spy_test.cpp Tests/Action_test.cpp Tests/EdgeCase_test.cpp Tests/Integration_test.cpp
 
 # קבצי header עם Q_OBJECT (איתור אוטומטי)
 QOBJECT_HDRS := $(shell grep -rl 'Q_OBJECT' . | grep '\.h$$' | sed 's|^\./||')

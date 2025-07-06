@@ -345,7 +345,7 @@ void GameBoardWindow::updateCoinLabel() {
         }
         else {
             // שחקן אחר – נסתיר את המידע
-            label->setText(name + " (??) - 🔒??");
+            label->setText(name + " (?) - 🔒 ");
         }
 
         // עיצוב

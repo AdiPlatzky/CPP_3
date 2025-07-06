@@ -3,9 +3,9 @@
 #include "doctest.h"
 #include "../Game.h"
 #include "../Player.h"
-#include "../Roles/Merchant.h"
 #include "../Roles/Judge.h"
 #include <memory>
+using namespace std;
 
 
 class DummyRole : public Role {
@@ -151,4 +151,130 @@ TEST_CASE("Game - game over and winner logic") {
 
     CHECK(game.isGameOver());
     CHECK(game.getWinner() == "Winner");
+}
+
+TEST_CASE("Game - Basic Construction and Setup") {
+    Game game;
+
+    SUBCASE("Add single player") {
+        auto p1 = std::make_shared<Player>("Player1", std::make_unique<DummyRole>());
+        game.addPlayer(p1);
+        CHECK(game.getPlayer().size() == 1);
+        CHECK(game.getActivePlayers().size() == 1);
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+    }
+
+    SUBCASE("Add multiple players") {
+        auto p1 = std::make_shared<Player>("Player1", std::make_unique<DummyRole>());
+        auto p2 = std::make_shared<Player>("Player2", std::make_unique<DummyRole>());
+        auto p3 = std::make_shared<Player>("Player3", std::make_unique<DummyRole>());
+
+        game.addPlayer(p1);
+        game.addPlayer(p2);
+        game.addPlayer(p3);
+
+        CHECK(game.getPlayer().size() == 3);
+        CHECK(game.getActivePlayers().size() == 3);
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+    }
+
+    SUBCASE("Add same player multiple times") {
+        auto p1 = std::make_shared<Player>("Player1", std::make_unique<DummyRole>());
+        game.addPlayer(p1);
+        game.addPlayer(p1);
+        CHECK(game.getPlayer().size() == 2); // Same player added twice
+    }
+}
+
+TEST_CASE("Game - Turn Management") {
+    Game game;
+    auto p1 = std::make_shared<Player>("Player1", std::make_unique<DummyRole>());
+    auto p2 = std::make_shared<Player>("Player2", std::make_unique<DummyRole>());
+    auto p3 = std::make_shared<Player>("Player3", std::make_unique<DummyRole>());
+
+    game.addPlayer(p1);
+    game.addPlayer(p2);
+    game.addPlayer(p3);
+
+    SUBCASE("Turn rotation") {
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player2");
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player3");
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player1"); // Back to first
+    }
+
+    SUBCASE("Skip inactive players") {
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+        p2->deactivate();
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player3"); // Skipped Player2
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+    }
+
+    SUBCASE("All players inactive except one") {
+        p2->deactivate();
+        p3->deactivate();
+        CHECK(game.getCurrentPlayer().getName() == "Player1");
+        game.nextTurn();
+        CHECK(game.getCurrentPlayer().getName() == "Player1"); // Only active player
+    }
+}
+
+TEST_CASE("Game - Coin Pool Management") {
+    Game game;
+
+    SUBCASE("Initial coin pool") {
+        CHECK(game.getCoinPool() > 1000000); // Should be very large initially
+    }
+
+    SUBCASE("Add to coin pool") {
+        int initial = game.getCoinPool();
+        game.addToCoinPool(100);
+        CHECK(game.getCoinPool() == initial + 100);
+    }
+
+    SUBCASE("Add negative to coin pool") {
+        int initial = game.getCoinPool();
+        game.addToCoinPool(-50);
+        CHECK(game.getCoinPool() == initial - 50);
+    }
+
+    SUBCASE("Add zero to coin pool") {
+        int initial = game.getCoinPool();
+        game.addToCoinPool(0);
+        CHECK(game.getCoinPool() == initial);
+    }
+}
+
+TEST_CASE("Game - Win Conditions") {
+    Game game;
+    auto p1 = std::make_shared<Player>("Player1", std::make_unique<DummyRole>());
+    auto p2 = std::make_shared<Player>("Player2", std::make_unique<DummyRole>());
+
+    game.addPlayer(p1);
+    game.addPlayer(p2);
+
+    SUBCASE("Game not over with multiple active players") {
+        CHECK(game.isGameOver() == false);
+        CHECK_THROWS(game.getWinner());
+    }
+
+    SUBCASE("Game over with one player left") {
+        p2->deactivate();
+        game.checkGameOver();
+        CHECK(game.isGameOver() == true);
+        CHECK(game.getWinner() == "Player1");
+    }
+
+    SUBCASE("Game over with no players") {
+        p1->deactivate();
+        p2->deactivate();
+        game.checkGameOver();
+        CHECK(game.isGameOver() == true);
+        CHECK_THROWS(game.getWinner()); // No active players
+    }
 }
