@@ -18,7 +18,7 @@
 AutoDemoWindow::AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& inputPlayers,
                                bool showDetailedActions, QWidget *parent)
     : QWidget(parent), players(inputPlayers), showDetailedActions(showDetailedActions),
-      rng(std::random_device{}()), currentState(STOPPED), currentStep(0), maxTurns(100)
+      rng(std::random_device{}()), currentState(STOPPED), currentStep(0), maxTurns(INFINITY)
 {
     mainLayout = new QVBoxLayout(this); // רק כאן!
 

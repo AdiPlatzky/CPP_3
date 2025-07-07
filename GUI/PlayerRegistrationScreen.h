@@ -23,11 +23,11 @@ class PlayerRegistrationScreen : public QWidget {
 public:
   explicit PlayerRegistrationScreen(QWidget *parent = nullptr);
 
-signals:
-  void playerRegistered(const std::vector<std::shared_ptr<Player>>& players);
+  signals:
+    void playerRegistered(const std::vector<std::shared_ptr<Player>>& players);
 
-private slots:
-  void updateNameFields(int playerCount);
+  private slots:
+    void updateNameFields(int playerCount);
   void startGame();
   void goBack();
 

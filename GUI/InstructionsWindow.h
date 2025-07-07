@@ -10,9 +10,9 @@
 class QTextEdit;
 
 class InstructionsWindow : public QWidget {
-  Q_OBJECT
+    Q_OBJECT
 
-  public:
+    public:
     explicit InstructionsWindow(QWidget *parent = nullptr);
 };
 

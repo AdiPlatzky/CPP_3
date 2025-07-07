@@ -20,12 +20,12 @@ class BlockingDialog : public QDialog {
                              const QString & target,
                              QWidget *parent = nullptr);
 
- signals:
-    void blockConfirmed();   // השחקן לחץ "חסום"
-    void skipDeclined();    // השחקן לחץ "דלג"
+  signals:
+     void blockConfirmed();   // השחקן לחץ "חסום"
+  void skipDeclined();    // השחקן לחץ "דלג"
 
-private slots:
-  void onBlockButtonClicked();
+  private slots:
+    void onBlockButtonClicked();
   void onSkipButtonClicked();
 
 private:

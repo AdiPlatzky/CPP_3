@@ -1,18 +1,19 @@
 #ifndef GAMEBOARDWINDOW_H
 #define GAMEBOARDWINDOW_H
 
-#include <QWidget>
 #include <QMap>
 #include <QListWidget>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QLabel>
 #include <QDockWidget>
 #include <QVector>
 #include <QString>
 #include <memory>
 #include "../Game.h"
 #include "../Player.h"
+#include <QWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <vector>
 #include "../Roles/RoleFactory.h"
 
 class QLabel;
@@ -27,6 +28,7 @@ class GameBoardWindow : public QWidget {
 
 public:
     explicit GameBoardWindow(const std::vector<std::shared_ptr<Player>>& players, QWidget *parent = nullptr);
+    QString getRoleColor(const QString &roleName); // הוסיפי כאן
 
 private:
     QLabel *turnLabel;

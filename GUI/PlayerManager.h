@@ -12,11 +12,11 @@
 
 class PlayerManager {
 public:
-  PlayerManager();
-  void createPlayers(const QVector<QString> &names);
-  const std::vector<std::shared_ptr<Player>> &getPlayers() const;
+    PlayerManager();
+    void createPlayers(const QVector<QString> &names);
+    const std::vector<std::shared_ptr<Player>> &getPlayers() const;
 
-  private:
+private:
     std::vector<std::shared_ptr<Player>> players;
     RoleFactory roleFactory;
 
