@@ -144,9 +144,12 @@ void MainWindow::openAutoPlayerSetup() {
 }
 
 void MainWindow::startAutoGameWithPlayers(const std::vector<std::shared_ptr<Player>>& players, bool showActions) {
-  auto *autoDemoWindow = new AutoDemoWindow(players, showActions);
+  auto *autoDemoWindow = new AutoDemoWindow(players, showActions, nullptr);
   autoDemoWindow->show();
-  this->close();
+  this->hide();
+
+  connect(autoDemoWindow, &AutoDemoWindow::destroyed, this, &MainWindow::show);
+
 }
 
 void MainWindow::openInstructions() {

@@ -89,7 +89,7 @@ void AutoPlayerSetupWindow::setupUI() {
     mainLayout->addWidget(namesGroup);
 
     // Buttons
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    QHBoxLayout *buttonLayout = new QHBoxLayout;
 
     backButton = new QPushButton("🏠 חזרה", this);
     backButton->setStyleSheet(

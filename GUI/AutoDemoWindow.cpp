@@ -32,9 +32,9 @@ AutoDemoWindow::AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& input
 }
 
 void AutoDemoWindow::setupUI() {
-    mainLayout = new QVBoxLayout(this);
-
     // Title and back button
+    if (!mainLayout)
+        mainLayout = new QVBoxLayout(this);
     QHBoxLayout *headerLayout = new QHBoxLayout();
 
     homeButton = new QPushButton("🏠 חזרה לתפריט", this);
@@ -73,6 +73,26 @@ void AutoDemoWindow::setupUI() {
     setupControls();
     setupActionLog();
     setupGraveyard();
+
+    QHBoxLayout* statusLayout = new QHBoxLayout();
+
+    statusLabel = new QLabel("📊 סטטוס: עצור", this);
+    QFont statusFont = statusLabel->font();
+    statusFont.setPointSize(12);
+    statusFont.setBold(true);
+    statusLabel->setFont(statusFont);
+
+    turnLabel = new QLabel("🎯 תור: טרם החל", this);
+    QFont turnFont = turnLabel->font();
+    turnFont.setPointSize(12);
+    turnFont.setBold(true);
+    turnLabel->setFont(turnFont);
+
+    statusLayout->addWidget(statusLabel);
+    statusLayout->addSpacing(20);
+    statusLayout->addWidget(turnLabel);
+
+    mainLayout->addLayout(statusLayout);
 }
 
 void AutoDemoWindow::setupPlayerDisplay() {
@@ -228,6 +248,7 @@ void AutoDemoWindow::setupGame() {
     connect(game.get(), &Game::playerEliminated, this, &AutoDemoWindow::onPlayerEliminated);
 
     updatePlayerDisplay();
+    setupUI();
     updateGameStatus();
 }
 
@@ -359,8 +380,8 @@ void AutoDemoWindow::updateGameStatus() {
             break;
     }
 
-    statusLabel->setText(status);
-    turnLabel->setText(turnText);
+    if (statusLabel) statusLabel->setText(status);
+    if (turnLabel) turnLabel->setText(turnText);
 }
 
 void AutoDemoWindow::logAction(const QString &message, const QString &color) {
@@ -403,6 +424,7 @@ void AutoDemoWindow::startDemo() {
 
     currentState = RUNNING;
     demoTimer->start();
+    setupUI();
     updateGameStatus();
     updatePlayerDisplay();
 }
@@ -412,6 +434,7 @@ void AutoDemoWindow::pauseDemo() {
         currentState = PAUSED;
         demoTimer->stop();
         logAction("⏸️ המשחק הושהה", "#f39c12");
+        setupUI();
         updateGameStatus();
     }
 }
@@ -420,6 +443,7 @@ void AutoDemoWindow::stopDemo() {
     currentState = STOPPED;
     demoTimer->stop();
     logAction("⏹️ המשחק נעצר", "#e74c3c");
+    setupUI();
     updateGameStatus();
 }
 
@@ -436,6 +460,7 @@ void AutoDemoWindow::onDemoStep() {
         }
         currentState = FINISHED;
         demoTimer->stop();
+        setupUI();
         updateGameStatus();
         return;
     }
@@ -459,6 +484,7 @@ void AutoDemoWindow::onDemoStep() {
 
         // Update displays
         updatePlayerDisplay();
+        setupUI();
         updateGameStatus();
 
         // Check for game over
@@ -471,6 +497,7 @@ void AutoDemoWindow::onDemoStep() {
         logAction("❌ שגיאה בתור: " + QString(e.what()), "#e74c3c");
         currentState = FINISHED;
         demoTimer->stop();
+        setupUI();
         updateGameStatus();
     }
 }
@@ -713,6 +740,7 @@ void AutoDemoWindow::onGameEnd(const QString& winnerName) {
 
     currentState = FINISHED;
     demoTimer->stop();
+    setupUI();
     updateGameStatus();
 
     showGameOverDialog(winnerName);
@@ -765,6 +793,7 @@ void AutoDemoWindow::showGameOverDialog(const QString& winner) {
         }
 
         updatePlayerDisplay();
+        setupUI();
         updateGameStatus();
 
         logAction("🔄 התחלת משחק חדש!", "#3498db");

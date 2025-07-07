@@ -1,6 +1,8 @@
 #ifndef AUTOGAMEWINDOW_H
 #define AUTOGAMEWINDOW_H
 
+#include "MainWindow.h"
+#include "../Player.h"
 #include <QMainWindow>
 #include <QLabel>
 #include <QGridLayout>
@@ -16,6 +18,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QTextCursor>
+#include <vector>
 
 // Forward declaration
 class SimpleGameBoard;
@@ -28,6 +31,9 @@ public:
     explicit AutoGameWindow(const QString& player1Name, const QString& player1Algorithm,
                            const QString& player2Name, const QString& player2Algorithm,
                            QWidget *parent = nullptr);
+
+    AutoGameWindow(const std::vector<std::shared_ptr<Player>> & vector, bool show_actions, MainWindow * main_window);
+
     ~AutoGameWindow();
 
 private slots:
