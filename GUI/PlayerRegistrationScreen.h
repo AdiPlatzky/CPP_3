@@ -12,6 +12,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
+# include <QCheckBox>
 #include "../Player.h"
 #include "../Roles/RoleFactory.h"
 
@@ -28,6 +29,8 @@ signals:
 private slots:
   void updateNameFields(int playerCount);
   void startGame();
+  void goBack();
+
 
 private:
   QSpinBox *playerCountSpin;
@@ -36,6 +39,11 @@ private:
   QVBoxLayout *formLayout;
   std::vector<QLineEdit*> nameFields;
   RoleFactory roleFactory;
+  QCheckBox *useRandomNamesCheckBox;
+
+  QCheckBox *showActionsCheckBox;
+
+  QPushButton *backButton;
 };
 
 #endif //PLAYERREGISTRATIONSCREEN_H
