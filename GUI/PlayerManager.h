@@ -4,6 +4,9 @@
 
 #ifndef PLAYERMANAGER_H
 #define PLAYERMANAGER_H
+#include "../Roles/RoleFactory.h"
+#include <QString>
+#include <iostream>
 
 
 

@@ -59,16 +59,6 @@ GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& pla
     lastBlockedLabel->setStyleSheet("font-weight: bold; color: darkred;");
     mainLayout->addWidget(lastBlockedLabel, 0, Qt::AlignCenter);
 
-
-    // // הוספת כותרת:
-    // QLabel* lastBlockedTitle = new QLabel("השחקן האחרון שנחסם:");
-    // lastBlockedTitle->setAlignment(Qt::AlignCenter);
-    // mainLayout->addWidget(lastBlockedTitle);
-    //
-    // // יצירת layout:
-    // lastBlockedLayout = new QVBoxLayout();
-    // mainLayout->addLayout(lastBlockedLayout);
-
     turnLabel = new QLabel(this);
     turnLabel->setAlignment(Qt::AlignCenter);
     QFont font = turnLabel->font();
@@ -81,7 +71,7 @@ GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& pla
     coinLabel = new QLabel(this);
     coinLabel->setAlignment(Qt::AlignCenter);
     QFont cFont = coinLabel->font();
-    font.setPointSize(14);
+    cFont.setPointSize(14);
     coinLabel->setFont(cFont);
     mainLayout->addStretch(1);
     mainLayout->addStretch(1);
@@ -108,7 +98,6 @@ GameBoardWindow::GameBoardWindow(const std::vector<std::shared_ptr<Player>>& pla
     updateCoinLabel();
 }
 
-
 void GameBoardWindow::setupPlayers() {
     playerLayout = new QHBoxLayout();
     const auto& playersList = game->getPlayer();
@@ -123,16 +112,13 @@ void GameBoardWindow::setupPlayers() {
         player->setStyleSheet("border: 2px solid black; padding: 15px; background: #DDEEFF;" "font-size: 10px;");
         player->setMinimumSize(120, 80);
         player->setAlignment(Qt::AlignCenter);
-        //playerLabels.append(player);
         playerLayout->addWidget(player);
         playerLabelMap[QString::fromStdString(name)] = player; // חדש
-
     }
     mainLayout->addLayout(playerLayout);
     highlightLayout = new QVBoxLayout();
     mainLayout->addLayout(highlightLayout);
 }
-
 
 void GameBoardWindow::updateBlockedArrestLabel() {
     QString blockedText = "🔒 חסימת מעצר: ";
@@ -149,7 +135,6 @@ void GameBoardWindow::updateBlockedArrestLabel() {
 
     lastBlockedLabel->setText(blockedText);
 }
-
 
 void GameBoardWindow::highlightCurrentPlayer() {
     mainLayout->addStretch(2);
@@ -195,7 +180,6 @@ void GameBoardWindow::highlightCurrentPlayer() {
         if (InvestButton) InvestButton->hide();
     }
 }
-
 
 void GameBoardWindow::updatePlayerStatusVisuals() {
     const auto& playersList = game->getPlayer();
@@ -249,10 +233,10 @@ void GameBoardWindow::setupActions() {
     connect(BribeButton, &QPushButton::clicked, this, &GameBoardWindow::handleBribe);
     connect(ArrestButton, &QPushButton::clicked, this, &GameBoardWindow::handleArrest);
     connect(SanctionButton, &QPushButton::clicked, [this]() {
-    requestTargetForAction([this](Player &attacker, Player &target) {
-        return game->performSanction(attacker, target);
+        requestTargetForAction([this](Player &attacker, Player &target) {
+            return game->performSanction(attacker, target);
+        });
     });
-});
     connect(CoupButton, &QPushButton::clicked, this, &GameBoardWindow::handleCoup);
     connect(InvestButton, &QPushButton::clicked, this, &GameBoardWindow::handleInvest);
     connect(PeekButton, &QPushButton::clicked, this, &GameBoardWindow::handleSpyCoins);
@@ -273,16 +257,9 @@ void GameBoardWindow::setupActions() {
 }
 
 void GameBoardWindow::showLastBlockedPlayer(const Player& player) {
-    if (lastBlockedLabel) {
-        lastBlockedLayout->removeWidget(lastBlockedLabel);
-        delete lastBlockedLabel;
-        lastBlockedLabel = nullptr;
-    }
-
-    lastBlockedLabel = new QLabel(QString::fromStdString(player.getName()));
-    lastBlockedLabel->setStyleSheet("background-color: red; color: white; padding: 6px; border-radius: 10px;");
-    lastBlockedLabel->setAlignment(Qt::AlignCenter);
-    lastBlockedLayout->addWidget(lastBlockedLabel);
+    // עדכון הלייבל של השחקן החסום
+    QString blockedText = "🔒 שחקן חסום: " + QString::fromStdString(player.getName());
+    lastBlockedLabel->setText(blockedText);
 }
 
 void GameBoardWindow::handleSpyCoins() {
@@ -321,9 +298,7 @@ void GameBoardWindow::handleSpyCoins() {
 
 void GameBoardWindow::updateTurnLabel() {
     turnLabel->setText("Player turn: " + QString::fromStdString(game->getCurrentPlayer().getName()));
-
 }
-
 
 void GameBoardWindow::updateCoinLabel() {
     const std::string& currentPlayerName = game->getCurrentPlayer().getName();
@@ -335,7 +310,6 @@ void GameBoardWindow::updateCoinLabel() {
         if (!playerLabelMap.contains(name)) continue;
 
         QLabel *label = playerLabelMap[name];
-
 
         if (playerPtr->getName() == currentPlayerName) {
             // זה השחקן שבתורו – נחשוף את המידע המלא
@@ -360,7 +334,6 @@ void GameBoardWindow::updateCoinLabel() {
     }
 }
 
-
 void GameBoardWindow::animateTurnLabel() {
     auto *animation = new QPropertyAnimation(turnLabel, "geometry");
     QRect start = turnLabel->geometry();
@@ -381,7 +354,6 @@ void GameBoardWindow::resetPlayerHighlights() {
         label->removeEventFilter(this);
     }
 }
-
 
 bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
     if (awaitingTargetSelection && event->type() == QEvent::MouseButtonPress) {
@@ -431,7 +403,6 @@ bool GameBoardWindow::eventFilter(QObject *watched, QEvent *event) {
     return QWidget::eventFilter(watched, event);
 }
 
-
 void GameBoardWindow::requestTargetForAction(std::function<ActionResult(Player&, Player&)> actionFunc) {
     awaitingTargetSelection = true;
     pendingActionFunction = actionFunc;
@@ -443,7 +414,6 @@ void GameBoardWindow::requestTargetForAction(std::function<ActionResult(Player&,
 
     actionResultLabel->setText("בחר שחקן לביצוע הפעולה");
 }
-
 
 void GameBoardWindow::requestTargetPlayer(const QString& title,
                                           std::function<void(Player&)> callback) {
@@ -476,7 +446,6 @@ void GameBoardWindow::requestTargetPlayer(const QString& title,
     }
 }
 
-
 void GameBoardWindow::handleGather() {
     Player& attacker = game->getCurrentPlayer();  // שימוש ב־Player& כמו בשאר הקוד
 
@@ -506,7 +475,6 @@ void GameBoardWindow::handleGather() {
 
             qDebug() << "DEBUG: blockers =" << blockers;
 
-
             wasBlocked = askForBlock(
                 QString::fromStdString(attacker.getName()),
                 "Gather",
@@ -523,21 +491,18 @@ void GameBoardWindow::handleGather() {
                 }
             }
 
-                // הצגת תוצאה
-                actionResultLabel->setText(QString::fromStdString(result.message));
-                game->nextTurn();
-                updateTurnLabel();
-                highlightCurrentPlayer();
-                updateCoinLabel();
-                // return;
-            }
+            // הצגת תוצאה
+            actionResultLabel->setText(QString::fromStdString(result.message));
+            game->nextTurn();
+            updateTurnLabel();
+            highlightCurrentPlayer();
+            updateCoinLabel();
         }
 
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         QMessageBox::warning(this, "שגיאה", e.what());
     }
 }
-
 
 void GameBoardWindow::handleTax() {
     Player& attacker = game->getCurrentPlayer();  // עדיין עובדים עם Player& כמו שסיכמנו
@@ -587,7 +552,6 @@ void GameBoardWindow::handleTax() {
             }
         }
 
-
         // אם הפעולה לא נחסמה – מבצעים אותה בפועל
         if (result.success && !wasBlocked) {
             try {
@@ -608,7 +572,6 @@ void GameBoardWindow::handleTax() {
         QMessageBox::warning(this, "שגיאה", e.what());
     }
 }
-
 
 void GameBoardWindow::handleBribe() {
     Player &attacker = game->getCurrentPlayer();
@@ -734,7 +697,6 @@ void GameBoardWindow::handleArrest() {
     });
 }
 
-
 void GameBoardWindow::handleCoup() {
     Player& attacker = game->getCurrentPlayer();
     requestTargetPlayer("בחר שחקן למעצר", [this, &attacker](Player& target) {
@@ -806,7 +768,6 @@ void GameBoardWindow::handleCoup() {
     });
 }
 
-
 void GameBoardWindow::handleInvest() {
     Player &attacker = game->getCurrentPlayer();
     if (attacker.isBlocked("invest")) {
@@ -816,15 +777,12 @@ void GameBoardWindow::handleInvest() {
 
     try {
         ActionResult resultObj = game->performInvest(attacker);
-        // QString result = QString::fromStdString(resultObj.message);
-        // actionResultLabel->setText(result);
         actionResultLabel->setText(QString::fromStdString(resultObj.message));
 
         if (resultObj.success) {
             game->nextTurn();
         }
 
-        //game->nextTurn();
         updateTurnLabel();
         highlightCurrentPlayer();
         updateCoinLabel();
@@ -832,10 +790,8 @@ void GameBoardWindow::handleInvest() {
     }catch (const std::exception& e) {
         QMessageBox::warning(this, "שגיאה", e.what());
     }
-
 }
 
-//################
 void GameBoardWindow::handleGameEnd(const QString& winnerName) {
     QMessageBox::information(this, "Winner!!", winnerName + "Is winner in the game!!");
     auto *mainMenu = new MainWindow();
@@ -843,7 +799,6 @@ void GameBoardWindow::handleGameEnd(const QString& winnerName) {
     this->close();
 }
 
-//################
 void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &reason) {
     QLabel *graveLabel = new QLabel(name, this);
     graveLabel->setStyleSheet(
@@ -866,13 +821,11 @@ void GameBoardWindow::addPlayerToGraveyard(const QString &name,  const QString &
     }
 }
 
-//################
 bool GameBoardWindow::askForBlock(const QString &attackerName,
     const QString &actionName,
     const QStringList &blockers,
-    const QString &targetName = "")
+    const QString &targetName)
 {
-
     for (const QString &blockerName : blockers) {
         BlockingDialog *dialog = new BlockingDialog(attackerName, actionName,  QStringList() << blockerName, targetName,this);
         dialog->setWindowTitle(QString(" %1  You can make a blocking").arg(blockerName));
@@ -907,5 +860,17 @@ bool GameBoardWindow::askForBlock(const QString &attackerName,
     return false;
 }
 
+// פונקציות dummy לתמיכה בפונקציונליות שלא הייתה בקוד המקורי
+void GameBoardWindow::setupActionCards() {
+    // פונקציה ריקה - הקוד המקורי לא השתמש בה
+}
 
+void GameBoardWindow::animateCardToCenter(QPushButton* card) {
+    // פונקציה ריקה - הקוד המקורי לא השתמש בה
+    Q_UNUSED(card)
+}
 
+void GameBoardWindow::chooseAndExecuteTargetAction(const QString& action) {
+    // פונקציה ריקה - הקוד המקורי לא השתמש בה
+    Q_UNUSED(action)
+}

@@ -26,11 +26,7 @@ class GameBoardWindow : public QWidget {
     Q_OBJECT
 
 public:
-    //explicit GameBoardWindow(QWidget *parent = nullptr);
     explicit GameBoardWindow(const std::vector<std::shared_ptr<Player>>& players, QWidget *parent = nullptr);
-
-    // private slots:
-    //     void closeGame();
 
 private:
     QLabel *turnLabel;
@@ -46,7 +42,6 @@ private:
     QVBoxLayout *highlightLayout;
     QVBoxLayout *lastBlockedLayout;
 
-    //QVector<QLabel*> playerLabels;
     QVector<QLabel*> actionCards;
     QVector<QString> playerNames;
 
@@ -92,27 +87,20 @@ private:
     void requestTargetPlayer(const QString& title,
                          std::function<void(Player&)> callback);
 
-
-    bool eventFilter(QObject *watched, QEvent *event)override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void addPlayerToGraveyard(const QString &name,  const QString &reason);
-    bool askForBlock(const QString &attackerName, const QString &actionName, const QStringList &blockers, const QString &targetName);
+    bool askForBlock(const QString &attackerName, const QString &actionName, const QStringList &blockers, const QString &targetName = "");
     void showLastBlockedPlayer(const Player& player);
     void updateBlockedArrestLabel();
 
-
-
 private slots:
-    //void handleIncome();
     void handleGather();
     void handleTax();
     void handleBribe();
     void handleArrest();
-    //void handleSanction();
     void handleCoup();
     void handleInvest();
     void handleGameEnd(const QString& winnerName);
-
-
 };
 
 #endif // GAMEBOARDWINDOW_H

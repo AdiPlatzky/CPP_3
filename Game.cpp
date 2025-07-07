@@ -260,7 +260,7 @@ void Game::applyGather(Player &player) {
     throw std::runtime_error("No coins left in the pool.");
   }
   player.addCoins(1);
-  coinPool--;
+  this->coinPool--;
   checkGameOver();
 }
 
@@ -310,7 +310,7 @@ void Game::applyTax(Player& player) {
   }
 
   player.addCoins(baseCoins);
-  coinPool -= baseCoins;
+  this->coinPool -= baseCoins;
   checkGameOver();
 }
 

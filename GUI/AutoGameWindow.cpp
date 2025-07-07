@@ -12,6 +12,91 @@
 #include <algorithm>
 #include <climits>
 
+// Simple Connect Four game board class for the auto game demo
+class SimpleGameBoard {
+private:
+    int board[6][7];
+    int currentPlayer;
+    bool gameOver;
+    int winner;
+
+public:
+    SimpleGameBoard() : currentPlayer(1), gameOver(false), winner(0) {
+        resetBoard();
+    }
+
+    void resetBoard() {
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 7; j++) {
+                board[i][j] = 0;
+            }
+        }
+        currentPlayer = 1;
+        gameOver = false;
+        winner = 0;
+    }
+
+    bool makeMove(int col, int player) {
+        if (col < 0 || col >= 7 || gameOver) return false;
+
+        for (int row = 5; row >= 0; row--) {
+            if (board[row][col] == 0) {
+                board[row][col] = player;
+                checkWin(row, col, player);
+                return true;
+            }
+        }
+        return false; // Column full
+    }
+
+    bool isValidMove(int col) const {
+        return col >= 0 && col < 7 && !gameOver && board[0][col] == 0;
+    }
+
+    bool isGameOver() const { return gameOver; }
+    int getWinner() const { return winner; }
+
+    const int (*getBoard() const)[7] { return board; }
+
+private:
+    void checkWin(int row, int col, int player) {
+        // Check horizontal
+        int count = 1;
+        for (int i = col - 1; i >= 0 && board[row][i] == player; i--) count++;
+        for (int i = col + 1; i < 7 && board[row][i] == player; i++) count++;
+        if (count >= 4) { gameOver = true; winner = player; return; }
+
+        // Check vertical
+        count = 1;
+        for (int i = row + 1; i < 6 && board[i][col] == player; i++) count++;
+        if (count >= 4) { gameOver = true; winner = player; return; }
+
+        // Check diagonal
+        count = 1;
+        for (int i = 1; row - i >= 0 && col - i >= 0 && board[row - i][col - i] == player; i++) count++;
+        for (int i = 1; row + i < 6 && col + i < 7 && board[row + i][col + i] == player; i++) count++;
+        if (count >= 4) { gameOver = true; winner = player; return; }
+
+        count = 1;
+        for (int i = 1; row - i >= 0 && col + i < 7 && board[row - i][col + i] == player; i++) count++;
+        for (int i = 1; row + i < 6 && col - i >= 0 && board[row + i][col - i] == player; i++) count++;
+        if (count >= 4) { gameOver = true; winner = player; return; }
+
+        // Check for draw
+        bool boardFull = true;
+        for (int j = 0; j < 7; j++) {
+            if (board[0][j] == 0) {
+                boardFull = false;
+                break;
+            }
+        }
+        if (boardFull) {
+            gameOver = true;
+            winner = 0; // Draw
+        }
+    }
+};
+
 AutoGameWindow::AutoGameWindow(const QString& player1Name, const QString& player1Algorithm,
                                const QString& player2Name, const QString& player2Algorithm,
                                QWidget *parent)
@@ -36,11 +121,11 @@ AutoGameWindow::AutoGameWindow(const QString& player1Name, const QString& player
 {
     setWindowTitle("משחק אוטומטי - Connect Four");
     setMinimumSize(1000, 700);
-    
-    m_gameBoard = new GameBoardWindow(this);
+
+    m_gameBoard = new SimpleGameBoard();
     m_gameTimer = new QTimer(this);
     connect(m_gameTimer, &QTimer::timeout, this, &AutoGameWindow::nextMove);
-    
+
     setupUI();
     updatePlayerInfo();
     updateGameBoard();
@@ -56,9 +141,9 @@ void AutoGameWindow::setupUI()
 {
     m_centralWidget = new QWidget(this);
     setCentralWidget(m_centralWidget);
-    
+
     m_mainLayout = new QHBoxLayout(m_centralWidget);
-    
+
     setupGameDisplay();
     setupControlPanel();
     setupPlayersInfo();
@@ -70,20 +155,20 @@ void AutoGameWindow::setupGameDisplay()
     m_gameFrame->setFrameStyle(QFrame::Box);
     m_gameFrame->setLineWidth(2);
     m_gameFrame->setMinimumSize(500, 400);
-    
+
     QVBoxLayout* gameLayout = new QVBoxLayout(m_gameFrame);
-    
+
     // Game status display
     m_gameStatusLabel = new QLabel("מוכן להתחיל משחק");
     m_gameStatusLabel->setAlignment(Qt::AlignCenter);
     m_gameStatusLabel->setStyleSheet("font-size: 16px; font-weight: bold; color: blue;");
     gameLayout->addWidget(m_gameStatusLabel);
-    
+
     // Game board
     QWidget* boardWidget = new QWidget();
     m_boardLayout = new QGridLayout(boardWidget);
     m_boardLayout->setSpacing(2);
-    
+
     // Initialize board labels
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
@@ -95,27 +180,27 @@ void AutoGameWindow::setupGameDisplay()
             m_boardLayout->addWidget(m_boardLabels[row][col], row, col);
         }
     }
-    
+
     gameLayout->addWidget(boardWidget);
-    
+
     // Current player and move count
     QHBoxLayout* statusLayout = new QHBoxLayout();
     m_currentPlayerLabel = new QLabel("תור שחקן: " + m_player1Name);
     m_currentPlayerLabel->setStyleSheet("font-size: 14px; font-weight: bold;");
     m_moveCountLabel = new QLabel("מספר מהלכים: 0");
     m_moveCountLabel->setStyleSheet("font-size: 14px;");
-    
+
     statusLayout->addWidget(m_currentPlayerLabel);
     statusLayout->addStretch();
     statusLayout->addWidget(m_moveCountLabel);
     gameLayout->addLayout(statusLayout);
-    
+
     // Progress bar
     m_gameProgressBar = new QProgressBar();
     m_gameProgressBar->setRange(0, 42); // Maximum moves in Connect Four
     m_gameProgressBar->setValue(0);
     gameLayout->addWidget(m_gameProgressBar);
-    
+
     m_mainLayout->addWidget(m_gameFrame, 2);
 }
 
@@ -125,41 +210,41 @@ void AutoGameWindow::setupControlPanel()
     m_controlFrame->setFrameStyle(QFrame::Box);
     m_controlFrame->setLineWidth(1);
     m_controlFrame->setMaximumWidth(300);
-    
+
     m_controlLayout = new QVBoxLayout(m_controlFrame);
-    
+
     // Control buttons
     QGroupBox* controlGroup = new QGroupBox("בקרת משחק");
     QVBoxLayout* controlButtonsLayout = new QVBoxLayout(controlGroup);
-    
+
     m_startButton = new QPushButton("התחל משחק");
     m_startButton->setStyleSheet("QPushButton { background-color: green; color: white; font-weight: bold; }");
     connect(m_startButton, &QPushButton::clicked, this, &AutoGameWindow::startGame);
-    
+
     m_pauseButton = new QPushButton("השהה");
     m_pauseButton->setEnabled(false);
     m_pauseButton->setStyleSheet("QPushButton { background-color: orange; color: white; font-weight: bold; }");
     connect(m_pauseButton, &QPushButton::clicked, this, &AutoGameWindow::pauseGame);
-    
+
     m_resetButton = new QPushButton("איפוס משחק");
     m_resetButton->setStyleSheet("QPushButton { background-color: red; color: white; font-weight: bold; }");
     connect(m_resetButton, &QPushButton::clicked, this, &AutoGameWindow::resetGame);
-    
+
     m_nextMoveButton = new QPushButton("מהלך הבא");
     m_nextMoveButton->setEnabled(false);
     connect(m_nextMoveButton, &QPushButton::clicked, this, &AutoGameWindow::nextMove);
-    
+
     controlButtonsLayout->addWidget(m_startButton);
     controlButtonsLayout->addWidget(m_pauseButton);
     controlButtonsLayout->addWidget(m_resetButton);
     controlButtonsLayout->addWidget(m_nextMoveButton);
-    
+
     // Auto move checkbox
     m_autoMoveCheckBox = new QCheckBox("מהלכים אוטומטיים");
     m_autoMoveCheckBox->setChecked(true);
     connect(m_autoMoveCheckBox, &QCheckBox::toggled, this, &AutoGameWindow::onAutoMoveToggled);
     controlButtonsLayout->addWidget(m_autoMoveCheckBox);
-    
+
     // Speed control
     QHBoxLayout* speedLayout = new QHBoxLayout();
     m_speedLabel = new QLabel("מהירות (מילישניות):");
@@ -168,24 +253,24 @@ void AutoGameWindow::setupControlPanel()
     m_speedSpinBox->setValue(1000);
     m_speedSpinBox->setSuffix(" ms");
     connect(m_speedSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &AutoGameWindow::onSpeedChanged);
-    
+
     speedLayout->addWidget(m_speedLabel);
     speedLayout->addWidget(m_speedSpinBox);
     controlButtonsLayout->addLayout(speedLayout);
-    
+
     m_controlLayout->addWidget(controlGroup);
-    
+
     // Move history
     QGroupBox* historyGroup = new QGroupBox("היסטוריית מהלכים");
     QVBoxLayout* historyLayout = new QVBoxLayout(historyGroup);
-    
+
     m_moveHistoryTextEdit = new QTextEdit();
     m_moveHistoryTextEdit->setMaximumHeight(200);
     m_moveHistoryTextEdit->setReadOnly(true);
     historyLayout->addWidget(m_moveHistoryTextEdit);
-    
+
     m_controlLayout->addWidget(historyGroup);
-    
+
     m_controlLayout->addStretch();
     m_mainLayout->addWidget(m_controlFrame, 1);
 }
@@ -193,49 +278,49 @@ void AutoGameWindow::setupControlPanel()
 void AutoGameWindow::setupPlayersInfo()
 {
     QVBoxLayout* playersLayout = new QVBoxLayout();
-    
+
     // Player 1 info
     m_player1Group = new QGroupBox("שחקן 1");
     m_player1Group->setStyleSheet("QGroupBox { color: red; font-weight: bold; }");
     QVBoxLayout* player1Layout = new QVBoxLayout(m_player1Group);
-    
+
     m_player1NameLabel = new QLabel("שם: " + m_player1Name);
     m_player1AlgorithmLabel = new QLabel("אלגוריתם: " + m_player1Algorithm);
     m_player1ScoreLabel = new QLabel("ניצחונות: 0");
-    
+
     player1Layout->addWidget(m_player1NameLabel);
     player1Layout->addWidget(m_player1AlgorithmLabel);
     player1Layout->addWidget(m_player1ScoreLabel);
-    
+
     // Player 2 info
     m_player2Group = new QGroupBox("שחקן 2");
     m_player2Group->setStyleSheet("QGroupBox { color: orange; font-weight: bold; }");
     QVBoxLayout* player2Layout = new QVBoxLayout(m_player2Group);
-    
+
     m_player2NameLabel = new QLabel("שם: " + m_player2Name);
     m_player2AlgorithmLabel = new QLabel("אלגוריתם: " + m_player2Algorithm);
     m_player2ScoreLabel = new QLabel("ניצחונות: 0");
-    
+
     player2Layout->addWidget(m_player2NameLabel);
     player2Layout->addWidget(m_player2AlgorithmLabel);
     player2Layout->addWidget(m_player2ScoreLabel);
-    
+
     // Game statistics
     QGroupBox* statsGroup = new QGroupBox("סטטיסטיקות");
     QVBoxLayout* statsLayout = new QVBoxLayout(statsGroup);
-    
+
     QLabel* drawsLabel = new QLabel("תיקו: 0");
     statsLayout->addWidget(drawsLabel);
-    
+
     playersLayout->addWidget(m_player1Group);
     playersLayout->addWidget(m_player2Group);
     playersLayout->addWidget(statsGroup);
     playersLayout->addStretch();
-    
+
     QWidget* playersWidget = new QWidget();
     playersWidget->setLayout(playersLayout);
     playersWidget->setMaximumWidth(250);
-    
+
     m_mainLayout->addWidget(playersWidget, 1);
 }
 
@@ -248,11 +333,11 @@ void AutoGameWindow::startGame()
         m_startButton->setEnabled(false);
         m_pauseButton->setEnabled(true);
         m_nextMoveButton->setEnabled(!m_autoMoveEnabled);
-        
+
         if (m_autoMoveEnabled) {
             m_gameTimer->start(m_gameSpeed);
         }
-        
+
         updateGameStatus();
         m_moveHistoryTextEdit->append("--- משחק חדש התחיל ---");
     }
@@ -266,7 +351,7 @@ void AutoGameWindow::pauseGame()
             m_gamePaused = false;
             m_pauseButton->setText("השהה");
             m_nextMoveButton->setEnabled(!m_autoMoveEnabled);
-            
+
             if (m_autoMoveEnabled) {
                 m_gameTimer->start(m_gameSpeed);
             }
@@ -277,7 +362,7 @@ void AutoGameWindow::pauseGame()
             m_nextMoveButton->setEnabled(true);
             m_gameTimer->stop();
         }
-        
+
         updateGameStatus();
     }
 }
@@ -287,18 +372,18 @@ void AutoGameWindow::resetGame()
     m_gameRunning = false;
     m_gamePaused = false;
     m_gameTimer->stop();
-    
+
     m_gameBoard->resetBoard();
     m_currentPlayer = 1;
     m_moveCount = 0;
     m_moveHistory.clear();
-    
+
     m_startButton->setText("התחל משחק");
     m_startButton->setEnabled(true);
     m_pauseButton->setText("השהה");
     m_pauseButton->setEnabled(false);
     m_nextMoveButton->setEnabled(false);
-    
+
     updateGameBoard();
     updateGameStatus();
     m_moveHistoryTextEdit->clear();
@@ -315,12 +400,12 @@ void AutoGameWindow::makeAutoMove()
 {
     QString currentAlgorithm = (m_currentPlayer == 1) ? m_player1Algorithm : m_player2Algorithm;
     QString currentPlayerName = (m_currentPlayer == 1) ? m_player1Name : m_player2Name;
-    
+
     int move = getComputerMove(currentAlgorithm, m_currentPlayer);
-    
+
     if (move != -1) {
         executeMove(move);
-        
+
         // Add to move history
         QString moveText = QString("מהלך %1: %2 (%3) בחר עמודה %4")
                           .arg(m_moveCount)
@@ -329,7 +414,7 @@ void AutoGameWindow::makeAutoMove()
                           .arg(move + 1);
         m_moveHistory.append(moveText);
         updateMoveHistory();
-        
+
         // Check if game is over
         checkGameEnd();
     }
@@ -340,7 +425,7 @@ void AutoGameWindow::executeMove(int move)
     if (m_gameBoard->makeMove(move, m_currentPlayer)) {
         m_moveCount++;
         m_currentPlayer = (m_currentPlayer == 1) ? 2 : 1;
-        
+
         updateGameBoard();
         updateGameStatus();
         m_gameProgressBar->setValue(m_moveCount);
@@ -352,7 +437,7 @@ void AutoGameWindow::checkGameEnd()
     if (m_gameBoard->isGameOver()) {
         int winner = m_gameBoard->getWinner();
         onGameFinished();
-        
+
         if (winner != 0) {
             if (winner == 1) {
                 m_player1Score++;
@@ -362,7 +447,7 @@ void AutoGameWindow::checkGameEnd()
         } else {
             m_draws++;
         }
-        
+
         updatePlayerInfo();
         showGameResults();
     }
@@ -372,12 +457,12 @@ void AutoGameWindow::onGameFinished()
 {
     m_gameRunning = false;
     m_gameTimer->stop();
-    
+
     m_startButton->setText("התחל משחק");
     m_startButton->setEnabled(true);
     m_pauseButton->setEnabled(false);
     m_nextMoveButton->setEnabled(false);
-    
+
     updateGameStatus();
 }
 
@@ -385,7 +470,7 @@ void AutoGameWindow::showGameResults()
 {
     int winner = m_gameBoard->getWinner();
     QString result;
-    
+
     if (winner == 1) {
         result = QString("שחקן 1 (%1) ניצח!").arg(m_player1Name);
     } else if (winner == 2) {
@@ -393,9 +478,9 @@ void AutoGameWindow::showGameResults()
     } else {
         result = "המשחק הסתיים בתיקו!";
     }
-    
+
     m_moveHistoryTextEdit->append("--- " + result + " ---");
-    
+
     QMessageBox::information(this, "תוצאות המשחק", result);
 }
 
@@ -409,11 +494,11 @@ void AutoGameWindow::updateGameBoard()
 {
     const int rows = 6;
     const int cols = 7;
-    
+
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
             int piece = m_gameBoard->getBoard()[row][col];
-            
+
             if (piece == 1) {
                 m_boardLabels[row][col]->setStyleSheet("border: 1px solid black; background-color: red; border-radius: 20px;");
                 m_boardLabels[row][col]->setText("●");
@@ -454,7 +539,7 @@ void AutoGameWindow::updateGameStatus()
         QString color = (m_currentPlayer == 1) ? "red" : "orange";
         m_gameStatusLabel->setStyleSheet(QString("font-size: 16px; font-weight: bold; color: %1;").arg(color));
     }
-    
+
     QString currentPlayerName = (m_currentPlayer == 1) ? m_player1Name : m_player2Name;
     m_currentPlayerLabel->setText("תור שחקן: " + currentPlayerName);
     m_moveCountLabel->setText(QString("מספר מהלכים: %1").arg(m_moveCount));
@@ -466,7 +551,7 @@ void AutoGameWindow::updateMoveHistory()
     for (const QString& move : m_moveHistory) {
         m_moveHistoryTextEdit->append(move);
     }
-    
+
     // Scroll to bottom
     QTextCursor cursor = m_moveHistoryTextEdit->textCursor();
     cursor.movePosition(QTextCursor::End);
@@ -484,7 +569,7 @@ void AutoGameWindow::onSpeedChanged(int speed)
 void AutoGameWindow::onAutoMoveToggled(bool enabled)
 {
     m_autoMoveEnabled = enabled;
-    
+
     if (m_gameRunning && !m_gamePaused) {
         if (enabled) {
             m_gameTimer->start(m_gameSpeed);
@@ -508,24 +593,24 @@ int AutoGameWindow::getComputerMove(const QString& algorithm, int player)
     } else if (algorithm == "הכי טוב") {
         return getBestMove(player);
     }
-    
+
     return getRandomMove(); // Default fallback
 }
 
 int AutoGameWindow::getRandomMove()
 {
     QList<int> validMoves;
-    
+
     for (int col = 0; col < 7; col++) {
         if (m_gameBoard->isValidMove(col)) {
             validMoves.append(col);
         }
     }
-    
+
     if (validMoves.isEmpty()) {
         return -1;
     }
-    
+
     int randomIndex = rand() % validMoves.size();
     return validMoves[randomIndex];
 }
@@ -535,13 +620,13 @@ int AutoGameWindow::getMinimaxMove(int player, int depth)
     // Simple minimax implementation
     int bestMove = -1;
     int bestScore = (player == 1) ? INT_MIN : INT_MAX;
-    
+
     for (int col = 0; col < 7; col++) {
         if (m_gameBoard->isValidMove(col)) {
             // Make temporary move
-            GameBoard* tempBoard = new GameBoard(*m_gameBoard);
+            SimpleGameBoard* tempBoard = new SimpleGameBoard(*m_gameBoard);
             tempBoard->makeMove(col, player);
-            
+
             // Calculate score for this move
             int score = 0;
             if (tempBoard->isGameOver()) {
@@ -557,7 +642,7 @@ int AutoGameWindow::getMinimaxMove(int player, int depth)
                 // Simple evaluation: count potential wins
                 score = evaluateBoard(tempBoard, player);
             }
-            
+
             if (player == 1 && score > bestScore) {
                 bestScore = score;
                 bestMove = col;
@@ -565,11 +650,11 @@ int AutoGameWindow::getMinimaxMove(int player, int depth)
                 bestScore = score;
                 bestMove = col;
             }
-            
+
             delete tempBoard;
         }
     }
-    
+
     return bestMove != -1 ? bestMove : getRandomMove();
 }
 
@@ -582,11 +667,11 @@ int AutoGameWindow::getAlphaBetaMove(int player, int depth)
 int AutoGameWindow::getBestMove(int player)
 {
     // Enhanced strategy: prioritize center, check for wins/blocks
-    
+
     // First, check if we can win
     for (int col = 0; col < 7; col++) {
         if (m_gameBoard->isValidMove(col)) {
-            GameBoard* tempBoard = new GameBoard(*m_gameBoard);
+            SimpleGameBoard* tempBoard = new SimpleGameBoard(*m_gameBoard);
             tempBoard->makeMove(col, player);
             if (tempBoard->getWinner() == player) {
                 delete tempBoard;
@@ -595,12 +680,12 @@ int AutoGameWindow::getBestMove(int player)
             delete tempBoard;
         }
     }
-    
+
     // Second, check if we need to block opponent
     int opponent = (player == 1) ? 2 : 1;
     for (int col = 0; col < 7; col++) {
         if (m_gameBoard->isValidMove(col)) {
-            GameBoard* tempBoard = new GameBoard(*m_gameBoard);
+            SimpleGameBoard* tempBoard = new SimpleGameBoard(*m_gameBoard);
             tempBoard->makeMove(col, opponent);
             if (tempBoard->getWinner() == opponent) {
                 delete tempBoard;
@@ -609,7 +694,7 @@ int AutoGameWindow::getBestMove(int player)
             delete tempBoard;
         }
     }
-    
+
     // Third, prefer center columns
     QList<int> centerColumns = {3, 2, 4, 1, 5, 0, 6};
     for (int col : centerColumns) {
@@ -617,11 +702,11 @@ int AutoGameWindow::getBestMove(int player)
             return col;
         }
     }
-    
+
     return getRandomMove();
 }
 
-int AutoGameWindow::evaluateBoard(GameBoard* board, int player)
+int AutoGameWindow::evaluateBoard(SimpleGameBoard* board, int player)
 {
     // Simple board evaluation
     int score = 0;

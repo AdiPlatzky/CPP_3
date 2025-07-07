@@ -19,40 +19,40 @@ include_directories(
 
 # קבצי מקור
 set(SOURCE_COMMON
-        Game.cpp
         Player.cpp
-        Roles/Governor.cpp
+        Game.cpp
         Roles/Baron.cpp
-        Roles/Spy.cpp
         Roles/General.cpp
+        Roles/Governor.cpp
         Roles/Judge.cpp
         Roles/Merchant.cpp
         Roles/RoleFactory.cpp
-        GUI/MainWindow.cpp
+        Roles/Spy.cpp
+        GUI/AutoDemoWindow.cpp
+        GUI/AutoGameWindow.cpp
+        GUI/AutoPlayerSetupWindow.cpp
+        GUI/BlockingDialog.cpp
         GUI/GameBoardWindow.cpp
         GUI/InstructionsWindow.cpp
+        GUI/MainWindow.cpp
+        GUI/PlayerManager.cpp
         GUI/PlayerRegistrationScreen.cpp
-        GUI/BlockingDialog.cpp
-        GUI/AutoDemoWindow.cpp
-        GUI/AutoPlayerSetupWindow.cpp
-        GUI/AutoGameWindow.cpp
-
-
 )
 
 # קבצי בדיקות
 set(TEST_SOURCES
-        Tests/Baron_test.cpp
-        Tests/Game_test.cpp
-        Tests/General_test.cpp
-        Tests/Governor_test.cpp
-        Tests/Judge_test.cpp
-        Tests/Merchant_test.cpp
-        Tests/Player_test.cpp
         Tests/Spy_test.cpp
-        Tests/Action_test.cpp
-        Tests/EdgeCase_test.cpp
+        Tests/Player_test.cpp
+        Tests/Merchant_test.cpp
+        Tests/Judge_test.cpp
         Tests/Integration_test.cpp
+        Tests/Governor_test.cpp
+        Tests/General_test.cpp
+        Tests/Game_test.cpp
+        Tests/EdgeCase_test.cpp
+        Tests/Baron_test.cpp
+        Tests/Action_test.cpp
+
 )
 
 # בניית המשחק הראשי

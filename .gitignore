@@ -1,0 +1,94 @@
+# Build directories
+build/
+Build/
+cmake-build-*/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+install_manifest.txt
+
+# Auto-generated MOC files
+*_moc.cpp
+moc_*.cpp
+moc_*.h
+
+# Auto-generated UI files
+ui_*.h
+
+# Auto-generated QRC files
+qrc_*.cpp
+
+# Qt Creator files
+*.pro.user
+*.pro.user.*
+
+# Executables
+*.exe
+*.out
+*.app
+main
+gui
+tests
+CoupGame
+TestGame
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.so
+*.dylib
+*.dll
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+cmake.log
+make.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# Test outputs
+Testing/
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Valgrind output
+valgrind-out.*

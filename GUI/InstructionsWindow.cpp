@@ -9,20 +9,23 @@
 #include <QPushButton>
 
 InstructionsWindow::InstructionsWindow(QWidget *parent) : QWidget(parent) {
-  setWindowTitle("הוראות משחק");
-  resize(400, 300);
+    setWindowTitle("הוראות משחק");
+    resize(400, 300);
 
-  //auto *label = new QVBoxLayout(this);
-  auto *instruction = new QTextEdit(this);
-  instruction->setReadOnly(true);
-  instruction->setText("Welcome to COUP! \n כאן יופיעו הוראות המשחק");
+    // יצירת layout ראשי
+    auto *mainLayout = new QVBoxLayout(this);
 
-  auto *homeButton = new QPushButton("🏠 חזרה לתפריט", this);
-  connect(homeButton, &QPushButton::clicked, [this]() {
-      auto *mainMenu = new MainWindow();
-      mainMenu->show();
-      this->close();
-  });
-  layout()->addWidget(instruction);
-  layout()->addWidget(homeButton);
+    auto *instruction = new QTextEdit(this);
+    instruction->setReadOnly(true);
+    instruction->setText("Welcome to COUP! \n כאן יופיעו הוראות המשחק");
+
+    auto *homeButton = new QPushButton("🏠 חזרה לתפריט", this);
+    connect(homeButton, &QPushButton::clicked, [this]() {
+        auto *mainMenu = new MainWindow();
+        mainMenu->show();
+        this->close();
+    });
+
+    mainLayout->addWidget(instruction);
+    mainLayout->addWidget(homeButton);
 }
