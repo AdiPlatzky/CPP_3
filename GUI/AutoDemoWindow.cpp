@@ -250,7 +250,6 @@ void AutoDemoWindow::setupGame() {
     connect(game.get(), &Game::playerEliminated, this, &AutoDemoWindow::onPlayerEliminated);
 
     updatePlayerDisplay();
-    setupUI();
     updateGameStatus();
 }
 
@@ -426,7 +425,6 @@ void AutoDemoWindow::startDemo() {
 
     currentState = RUNNING;
     demoTimer->start();
-    setupUI();
     updateGameStatus();
     updatePlayerDisplay();
 }
@@ -436,7 +434,6 @@ void AutoDemoWindow::pauseDemo() {
         currentState = PAUSED;
         demoTimer->stop();
         logAction("⏸️ המשחק הושהה", "#f39c12");
-        setupUI();
         updateGameStatus();
     }
 }
@@ -445,7 +442,6 @@ void AutoDemoWindow::stopDemo() {
     currentState = STOPPED;
     demoTimer->stop();
     logAction("⏹️ המשחק נעצר", "#e74c3c");
-    setupUI();
     updateGameStatus();
 }
 
@@ -462,7 +458,6 @@ void AutoDemoWindow::onDemoStep() {
         }
         currentState = FINISHED;
         demoTimer->stop();
-        setupUI();
         updateGameStatus();
         return;
     }
@@ -486,7 +481,6 @@ void AutoDemoWindow::onDemoStep() {
 
         // Update displays
         updatePlayerDisplay();
-        setupUI();
         updateGameStatus();
 
         // Check for game over
@@ -499,7 +493,6 @@ void AutoDemoWindow::onDemoStep() {
         logAction("❌ שגיאה בתור: " + QString(e.what()), "#e74c3c");
         currentState = FINISHED;
         demoTimer->stop();
-        setupUI();
         updateGameStatus();
     }
 }
@@ -742,7 +735,6 @@ void AutoDemoWindow::onGameEnd(const QString& winnerName) {
 
     currentState = FINISHED;
     demoTimer->stop();
-    setupUI();
     updateGameStatus();
 
     showGameOverDialog(winnerName);
@@ -795,7 +787,6 @@ void AutoDemoWindow::showGameOverDialog(const QString& winner) {
         }
 
         updatePlayerDisplay();
-        setupUI();
         updateGameStatus();
 
         logAction("🔄 התחלת משחק חדש!", "#3498db");
