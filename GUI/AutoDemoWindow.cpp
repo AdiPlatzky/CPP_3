@@ -20,6 +20,8 @@ AutoDemoWindow::AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& input
     : QWidget(parent), players(inputPlayers), showDetailedActions(showDetailedActions),
       rng(std::random_device{}()), currentState(STOPPED), currentStep(0), maxTurns(100)
 {
+    mainLayout = new QVBoxLayout(this); // רק כאן!
+
     setWindowTitle("🤖 COUP - משחק אוטומטי");
     resize(1200, 800);
 
