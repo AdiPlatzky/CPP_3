@@ -1,4 +1,4 @@
-## 🎭 COUP Game
+## הפיכה 🎭 COUP Game
 
 משחק קלפי אסטרטגיה עם ממשק גרפי וקונסול.
 
