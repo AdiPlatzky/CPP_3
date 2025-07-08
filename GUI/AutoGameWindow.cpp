@@ -1,3 +1,5 @@
+// 12adi45@gmail.com
+
 #include "AutoGameWindow.h"
 #include "../Game.h"
 #include "GameBoardWindow.h"
@@ -12,19 +14,24 @@
 #include <algorithm>
 #include <climits>
 
-// Simple Connect Four game board class for the auto game demo
+/**
+ * @class SimpleGameBoard
+ * @brief מחלקה פשוטה לניהול לוח Connect Four - 6 שורות ו-7 עמודות
+ */
 class SimpleGameBoard {
 private:
-    int board[6][7];
-    int currentPlayer;
-    bool gameOver;
-    int winner;
+    int board[6][7];      // לוח המשחק
+    int currentPlayer;    // השחקן הנוכחי
+    bool gameOver;        // האם המשחק הסתיים
+    int winner;          // המנצח (0=תיקו, 1-2=שחקנים)
 
 public:
+    /** @brief בנאי - מאתחל לוח ריק */
     SimpleGameBoard() : currentPlayer(1), gameOver(false), winner(0) {
         resetBoard();
     }
 
+    /** @brief מאפס את הלוח למצב התחלתי */
     void resetBoard() {
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 7; j++) {
@@ -36,6 +43,7 @@ public:
         winner = 0;
     }
 
+    /** @brief מבצע מהלך בעמודה נתונה ובודק ניצחון */
     bool makeMove(int col, int player) {
         if (col < 0 || col >= 7 || gameOver) return false;
 
@@ -49,16 +57,22 @@ public:
         return false; // Column full
     }
 
+    /** @brief בודק אם מהלך בעמודה נתונה חוקי */
     bool isValidMove(int col) const {
         return col >= 0 && col < 7 && !gameOver && board[0][col] == 0;
     }
 
+    /** @brief מחזיר האם המשחק הסתיים */
     bool isGameOver() const { return gameOver; }
+
+    /** @brief מחזיר את המנצח */
     int getWinner() const { return winner; }
 
+    /** @brief מחזיר את לוח המשחק */
     const int (*getBoard() const)[7] { return board; }
 
 private:
+    /** @brief בודק ניצחון לאחר מהלך - אופקי, אנכי ואלכסוני */
     void checkWin(int row, int col, int player) {
         // Check horizontal
         int count = 1;
@@ -97,6 +111,9 @@ private:
     }
 };
 
+/**
+ * @brief בנאי - יוצר חלון משחק אוטומטי עם שני שחקנים ואלגוריתמים
+ */
 AutoGameWindow::AutoGameWindow(const QString& player1Name, const QString& player1Algorithm,
                                const QString& player2Name, const QString& player2Algorithm,
                                QWidget *parent)
@@ -132,16 +149,21 @@ AutoGameWindow::AutoGameWindow(const QString& player1Name, const QString& player
     updateGameStatus();
 }
 
+/**
+ * @brief מחסל - מנקה את לוח המשחק
+ */
 AutoGameWindow::~AutoGameWindow()
 {
     delete m_gameBoard;
 }
 
+/**
+ * @brief בונה את כל ממשק המשתמש - תצוגת משחק, בקרה ומידע שחקנים
+ */
 void AutoGameWindow::setupUI()
 {
     m_centralWidget = new QWidget(this);
     setCentralWidget(m_centralWidget);
-
     m_mainLayout = new QHBoxLayout(m_centralWidget);
 
     setupGameDisplay();
@@ -149,6 +171,9 @@ void AutoGameWindow::setupUI()
     setupPlayersInfo();
 }
 
+/**
+ * @brief בונה תצוגת לוח המשחק עם סטטוס ופס התקדמות
+ */
 void AutoGameWindow::setupGameDisplay()
 {
     m_gameFrame = new QFrame();
@@ -204,6 +229,9 @@ void AutoGameWindow::setupGameDisplay()
     m_mainLayout->addWidget(m_gameFrame, 2);
 }
 
+/**
+ * @brief בונה פאנל בקרה עם כפתורים, מהירות והיסטוריית מהלכים
+ */
 void AutoGameWindow::setupControlPanel()
 {
     m_controlFrame = new QFrame();
@@ -270,11 +298,13 @@ void AutoGameWindow::setupControlPanel()
     historyLayout->addWidget(m_moveHistoryTextEdit);
 
     m_controlLayout->addWidget(historyGroup);
-
     m_controlLayout->addStretch();
     m_mainLayout->addWidget(m_controlFrame, 1);
 }
 
+/**
+ * @brief בונה אזור מידע השחקנים עם שמות, אלגוריתמים וניקוד
+ */
 void AutoGameWindow::setupPlayersInfo()
 {
     QVBoxLayout* playersLayout = new QVBoxLayout();
@@ -324,6 +354,9 @@ void AutoGameWindow::setupPlayersInfo()
     m_mainLayout->addWidget(playersWidget, 1);
 }
 
+/**
+ * @brief מתחיל משחק חדש ומפעיל טיימר אוטומטי אם נדרש
+ */
 void AutoGameWindow::startGame()
 {
     if (!m_gameRunning) {
@@ -343,6 +376,9 @@ void AutoGameWindow::startGame()
     }
 }
 
+/**
+ * @brief משהה או ממשיך את המשחק בהתאם למצב הנוכחי
+ */
 void AutoGameWindow::pauseGame()
 {
     if (m_gameRunning) {
@@ -367,6 +403,9 @@ void AutoGameWindow::pauseGame()
     }
 }
 
+/**
+ * @brief מאפס את המשחק למצב התחלתי
+ */
 void AutoGameWindow::resetGame()
 {
     m_gameRunning = false;
@@ -389,6 +428,9 @@ void AutoGameWindow::resetGame()
     m_moveHistoryTextEdit->clear();
 }
 
+/**
+ * @brief מבצע מהלך הבא אם המשחק פועל
+ */
 void AutoGameWindow::nextMove()
 {
     if (m_gameRunning && !m_gamePaused && !m_gameBoard->isGameOver()) {
@@ -396,6 +438,9 @@ void AutoGameWindow::nextMove()
     }
 }
 
+/**
+ * @brief מבצע מהלך אוטומטי לפי האלגוריתם של השחקן הנוכחי
+ */
 void AutoGameWindow::makeAutoMove()
 {
     QString currentAlgorithm = (m_currentPlayer == 1) ? m_player1Algorithm : m_player2Algorithm;
@@ -420,6 +465,9 @@ void AutoGameWindow::makeAutoMove()
     }
 }
 
+/**
+ * @brief מבצע מהלך נתון ומעדכן תצוגה
+ */
 void AutoGameWindow::executeMove(int move)
 {
     if (m_gameBoard->makeMove(move, m_currentPlayer)) {
@@ -432,6 +480,9 @@ void AutoGameWindow::executeMove(int move)
     }
 }
 
+/**
+ * @brief בודק אם המשחק הסתיים ומעדכן ניקוד
+ */
 void AutoGameWindow::checkGameEnd()
 {
     if (m_gameBoard->isGameOver()) {
@@ -453,6 +504,9 @@ void AutoGameWindow::checkGameEnd()
     }
 }
 
+/**
+ * @brief מטפל בסיום משחק - עוצר טיימר ומעדכן כפתורים
+ */
 void AutoGameWindow::onGameFinished()
 {
     m_gameRunning = false;
@@ -466,6 +520,9 @@ void AutoGameWindow::onGameFinished()
     updateGameStatus();
 }
 
+/**
+ * @brief מציג תוצאות המשחק בדיאלוג
+ */
 void AutoGameWindow::showGameResults()
 {
     int winner = m_gameBoard->getWinner();
@@ -480,16 +537,21 @@ void AutoGameWindow::showGameResults()
     }
 
     m_moveHistoryTextEdit->append("--- " + result + " ---");
-
     QMessageBox::information(this, "תוצאות המשחק", result);
 }
 
+/**
+ * @brief מעדכן תוויות ניקוד השחקנים
+ */
 void AutoGameWindow::updatePlayerInfo()
 {
     m_player1ScoreLabel->setText(QString("ניצחונות: %1").arg(m_player1Score));
     m_player2ScoreLabel->setText(QString("ניצחונות: %1").arg(m_player2Score));
 }
 
+/**
+ * @brief מעדכן תצוגת לוח המשחק עם צבעים לפי השחקנים
+ */
 void AutoGameWindow::updateGameBoard()
 {
     const int rows = 6;
@@ -513,6 +575,9 @@ void AutoGameWindow::updateGameBoard()
     }
 }
 
+/**
+ * @brief מעדכן תווית סטטוס המשחק לפי המצב הנוכחי
+ */
 void AutoGameWindow::updateGameStatus()
 {
     if (!m_gameRunning) {
@@ -545,6 +610,9 @@ void AutoGameWindow::updateGameStatus()
     m_moveCountLabel->setText(QString("מספר מהלכים: %1").arg(m_moveCount));
 }
 
+/**
+ * @brief מעדכן שדה היסטוריית המהלכים ומגלל לסוף
+ */
 void AutoGameWindow::updateMoveHistory()
 {
     m_moveHistoryTextEdit->clear();
@@ -558,6 +626,9 @@ void AutoGameWindow::updateMoveHistory()
     m_moveHistoryTextEdit->setTextCursor(cursor);
 }
 
+/**
+ * @brief מעדכן מהירות המשחק ומחדש את הטיימר אם פועל
+ */
 void AutoGameWindow::onSpeedChanged(int speed)
 {
     m_gameSpeed = speed;
@@ -566,6 +637,9 @@ void AutoGameWindow::onSpeedChanged(int speed)
     }
 }
 
+/**
+ * @brief מעדכן מצב מהלכים אוטומטיים ומתאים את הטיימר והכפתורים
+ */
 void AutoGameWindow::onAutoMoveToggled(bool enabled)
 {
     m_autoMoveEnabled = enabled;
@@ -582,6 +656,10 @@ void AutoGameWindow::onAutoMoveToggled(bool enabled)
 }
 
 // AI Algorithms Implementation
+
+/**
+ * @brief מחזיר מהלך מחושב לפי האלגוריתם הנבחר
+ */
 int AutoGameWindow::getComputerMove(const QString& algorithm, int player)
 {
     if (algorithm == "אקראי") {
@@ -597,6 +675,9 @@ int AutoGameWindow::getComputerMove(const QString& algorithm, int player)
     return getRandomMove(); // Default fallback
 }
 
+/**
+ * @brief מחזיר מהלך אקראי מהעמודות הזמינות
+ */
 int AutoGameWindow::getRandomMove()
 {
     QList<int> validMoves;
@@ -615,6 +696,9 @@ int AutoGameWindow::getRandomMove()
     return validMoves[randomIndex];
 }
 
+/**
+ * @brief מחזיר מהלך לפי אלגוריתם minimax פשוט
+ */
 int AutoGameWindow::getMinimaxMove(int player, int depth)
 {
     // Simple minimax implementation
@@ -658,12 +742,18 @@ int AutoGameWindow::getMinimaxMove(int player, int depth)
     return bestMove != -1 ? bestMove : getRandomMove();
 }
 
+/**
+ * @brief מחזיר מהלך לפי אלגוריתם alpha-beta (כרגע זהה ל-minimax)
+ */
 int AutoGameWindow::getAlphaBetaMove(int player, int depth)
 {
     // For now, use minimax (can be enhanced later)
     return getMinimaxMove(player, depth);
 }
 
+/**
+ * @brief מחזיר מהלך הטוב ביותר עם אסטרטגיה מתקדמת - ניצחון, חסימה, מרכז
+ */
 int AutoGameWindow::getBestMove(int player)
 {
     // Enhanced strategy: prioritize center, check for wins/blocks
@@ -706,6 +796,9 @@ int AutoGameWindow::getBestMove(int player)
     return getRandomMove();
 }
 
+/**
+ * @brief מעריך את איכות מצב הלוח עבור שחקן - מרכז ופוטנציאל ניצחון
+ */
 int AutoGameWindow::evaluateBoard(SimpleGameBoard* board, int player)
 {
     // Simple board evaluation

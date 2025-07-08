@@ -17,68 +17,47 @@
 #include "../Game.h"
 #include "../Player.h"
 
-/*!
+/**
  * @class AutoDemoWindow
- * @brief מנהלת הדגמה אוטומטית (AI) של משחק Coup כולל ממשק משתמש גרפי, יומן פעולות, תצוגת סטטוס לכל שלב ושליטה מלאה על מהלך המשחק.
- *        מאפשרת להריץ משחק בין שחקנים ממוחשבים (ללא מגע משתמש), עם עדכון תצוגה אוטומטי וצפייה מהצד.
- *
- * מאפיינים:
- * - כל שחקן הוא מצביע חכם (shared_ptr<Player>).
- * - AI מבצע החלטות רנדומליות/אסטרטגיות עבור כל שחקן בתורו.
- * - יומן מפורט של כל פעולה.
- * - שליטה על מהירות/השהיה/הפסקה/שלב בודד.
- * - תצוגה דינמית של סטטוס, תור, הדחות ושחקנים.
+ * @brief חלון הדגמה אוטומטית של משחק Coup עם שחקני AI וממשק ניהול מלא
  */
 class AutoDemoWindow : public QWidget {
     Q_OBJECT
 
 public:
-    /*!
-  * @brief בנאי — בונה את חלון המשחק האוטומטי, יוצר את כל רכיבי הממשק ומאתחל את המשחק.
-  * @param players רשימת שחקנים (shared_ptr) שמועברים למשחק.
-  * @param showDetailedActions האם להציג את הפעולות בפירוט (מגדיר את אופן הדיווח ביומן).
-  * @param parent מצביע ל־QWidget האב (ברירת מחדל nullptr).
-  */
+    /**
+     * @brief בנאי - יוצר חלון דמו עם רשימת שחקנים וממשק בקרה
+     * @param players רשימת השחקנים למשחק
+     * @param showDetailedActions האם להציג פעולות מפורטות ביומן
+     * @param parent ווידג'ט אב
+     */
     explicit AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& players,
                             bool showDetailedActions = true,
                             QWidget *parent = nullptr);
 
 private slots:
-    /*!
-    * @brief התחלת דמו חדש או המשך משחק שהופסק. מאתחל מחדש את השחקנים והמשחק, מפעיל את הטיימר של ה־AI.
-    */
+    /** @brief מתחיל או ממשיך את הדמו האוטומטי */
     void startDemo();
-    /*!
-     * @brief השהיית המשחק — עוצר את לולאת הטיימר של ההדגמה.
-     */
+
+    /** @brief משהה את הדמו הרץ */
     void pauseDemo();
-    /*!
-     * @brief עוצר את המשחק לחלוטין ומחזיר למצב התחלתי.
-     */
+
+    /** @brief עוצר את הדמו ומחזיר למצב התחלתי */
     void stopDemo();
-    /*!
-     * @brief מבצע שלב אחד של משחק (עבור debugging או משחק איטי מאוד).
-     */
+
+    /** @brief מבצע צעד בודד במשחק (למצב דיבוג) */
     void stepDemo();
-    /*!
-     * @brief קריאה פנימית: מפעילה תור של AI, מעדכנת תצוגה, ומבצעת בדיקת סיום.
-     */
+
+    /** @brief מבצע תור AI אחד ומעדכן את התצוגה */
     void onDemoStep();
-    /*!
-     * @brief משנה את מהירות הדמו (באמצעות הסליידר).
-     * @param value ערך בין 1 ל־10, קובע את מהירות ההרצה.
-     */
+
+    /** @brief משנה את מהירות הדמו לפי ערך הסליידר */
     void adjustSpeed(int value);
-    /*!
-     * @brief מטפל בסיום משחק — מציג חלונית סיום, מציג מנצח, מאתחל את החלון.
-     * @param winnerName שם המנצח במשחק.
-     */
+
+    /** @brief מטפל בסיום המשחק ומציג דיאלוג ניצחון */
     void onGameEnd(const QString& winnerName);
-    /*!
-     * @brief מטפל בהדחת שחקן מהמשחק (עדכון יומן ותצוגה).
-     * @param playerName שם השחקן שהודח.
-     * @param reason סיבה להדחה.
-     */
+
+    /** @brief מטפל בהדחת שחקן ומוסיף אותו לבית הקברות */
     void onPlayerEliminated(const QString& playerName, const QString& reason);
 
 private:
@@ -88,17 +67,17 @@ private:
     QHBoxLayout *playerLayout;
     QGridLayout *controlLayout;
 
-    // תצוגת שחקנים
+    /** @brief מיפוי שמות שחקנים לתוויות התצוגה שלהם */
     QMap<QString, QLabel*> playerLabelMap;
     QLabel *currentPlayerHighlight = nullptr;
 
-    // סטטוס המשחק
+    /** @brief תווית המציגה את מצב המשחק הנוכחי */
     QLabel *turnLabel;
     QLabel *statusLabel;
     QLabel *actionResultLabel;
     QLabel *speedLabel;
 
-    // כפתורים לשליטה
+    /** @brief כפתורי בקרת המשחק */
     QPushButton *startButton;
     QPushButton *pauseButton;
     QPushButton *stopButton;
@@ -106,10 +85,10 @@ private:
     QPushButton *homeButton;
     QSlider *speedSlider;
 
-    // יומן פעולות
+    /** @brief יומן פעולות המשחק */
     QTextEdit *actionLog;
 
-    // בית קברות (שחקנים מודחים)
+    /** @brief רשימת שחקנים שהודחו */
     QDockWidget *graveyardDock;
     QListWidget *graveyardList;
 
@@ -122,6 +101,7 @@ private:
 
     // --------------------- Demo State -------------------------
 
+    /** @brief מצבי הדמו האפשריים */
     enum DemoState {
         STOPPED,   ///< מצב התחלתי – המשחק לא התחיל
         RUNNING,   ///< המשחק רץ
@@ -135,91 +115,58 @@ private:
 
     // ---------------------- Helper Methods --------------------
 
-    /*!
-    * @brief בונה את כל ממשק המשתמש (labels, לחצנים, סליידר, יומן, תצוגות).
-    * הערה: מותר להקצות mainLayout רק פעם אחת בקונסטרקטור! אין להקצות מחדש בפונקציה זו.
-    */
+    /** @brief בונה את כל רכיבי ממשק המשתמש */
     void setupUI();
-    /*!
-     * @brief אתחול לוגיקת המשחק — יצירת מופע Game, חיבור סיגנלים, הוספת שחקנים.
-     */
+
+    /** @brief מאתחל את אובייקט המשחק ומחבר סיגנלים */
     void setupGame();
-    /*!
-     * @brief בונה תצוגת קלפי השחקנים (labels + מיפוי לפי שם).
-     */
+
+    /** @brief יוצר תצוגת קלפי השחקנים */
     void setupPlayerDisplay();
-    /*!
-     * @brief בונה את קופסת הבקרה למשחק (play/pause/stop/step + סליידר מהירות).
-     */
+
+    /** @brief יוצר את פאנל כפתורי הבקרה */
     void setupControls();
-    /*!
-     * @brief בונה את אזור יומן הפעולות — תצוגה מתגלגלת של כל אירוע במשחק.
-     */
+
+    /** @brief יוצר את תיבת יומן הפעולות */
     void setupActionLog();
-    /*!
-     * @brief בונה את תצוגת "בית הקברות" — רשימת שחקנים שהודחו (בינתיים יומן בלבד).
-     */
+
+    /** @brief יוצר את רשימת השחקנים המודחים */
     void setupGraveyard();
-    /*!
-     * @brief מעדכן תצוגת השחקנים (כולל צבע, סטטוס, מטבעות).
-     */
+
+    /** @brief מעדכן את תצוגת כל השחקנים */
     void updatePlayerDisplay();
-    /*!
-     * @brief מדגיש גרפית את השחקן הנוכחי (זה שבתורו).
-     */
+
+    /** @brief מדגיש את השחקן שבתורו */
     void highlightCurrentPlayer();
-    /*!
-     * @brief מעדכן את הלייבלים של סטטוס המשחק והתור הנוכחי.
-     */
+
+    /** @brief מעדכן את תוויות הסטטוס והתור */
     void updateGameStatus();
-    /*!
-     * @brief מוסיף שורה ליומן הפעולות, עם צבע והדגשה.
-     * @param message טקסט האירוע.
-     * @param color צבע הקו (HEX).
-     */
+
+    /** @brief מוסיף הודעה ליומן עם צבע וחותמת זמן */
     void logAction(const QString &message, const QString &color = "#ecf0f1");
-    /*!
-     * @brief מבצע מהלך של AI לשחקן הנוכחי (בחירת פעולה, ביצוע, עדכון תצוגה).
-     */
+
+    /** @brief מבצע מהלך AI לשחקן הנוכחי */
     void performAIAction();
-    /*!
-     * @brief בוחר רנדומלית פעולה מותרת לשחקן (בהתאם לכללים).
-     * @param player רפרנס לשחקן.
-     * @return שם הפעולה.
-     */
+
+    /** @brief בוחר פעולה אקראית חוקית לשחקן */
     QString getRandomAction(const Player& player);
-    /*!
-     * @brief בוחר רנדומלית שחקן יעד מתאים (לפעולות שמצריכות יעד).
-     * @param attacker תוקף/שחקן פועל.
-     * @return מצביע חכם ל־Player היעד.
-     */
+
+    /** @brief בוחר שחקן יעד אקראי מתאים */
     std::shared_ptr<Player> getRandomTarget(const Player& attacker);
-    /*!
-     * @brief מבצע פעולה מסוימת לשחקן (כולל הדמיית חסימות, תוצאות).
-     * @param action שם הפעולה.
-     * @param player רפרנס לשחקן.
-     */
+
+    /** @brief מבצע פעולה נבחרת עם הדמיית חסימות */
     void simulatePlayerDecision(const QString& action, Player& player);
-    /*!
-     * @brief מחזיר צבע HEX לפי שם תפקיד (להדגשה גרפית של דמות).
-     * @param roleName שם התפקיד.
-     */
+
+    /** @brief מחזיר צבע ייחודי לכל תפקיד */
     QString getRoleColor(const QString &roleName);
-    /*!
-     * @brief מחזיר מחרוזת תיאור של שחקן (לצורך דוחות/יומן).
-     * @param player רפרנס לשחקן.
-     */
+
+    /** @brief מחזיר מחרוזת מידע מלאה על שחקן */
     QString getPlayerInfo(const Player &player);
-    /*!
-     * @brief מוסיף שחקן לרשימת המודחים (בינתיים רק ליומן, אפשר להרחיב).
-     * @param name שם השחקן.
-     * @param reason סיבה.
-     */
+
+    /** @brief מוסיף שחקן לרשימת המודחים */
     void addPlayerToGraveyard(const QString &name, const QString &reason);
-    /*!
-     * @brief פותח דיאלוג סיום משחק — מציג ניצחון ומציע להפעיל משחק חדש.
-     * @param winner שם המנצח.
-     */
+
+    /** @brief מציג דיאלוג סיום משחק עם אפשרות להתחיל מחדש */
     void showGameOverDialog(const QString& winner);
 };
 

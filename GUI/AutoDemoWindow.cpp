@@ -1,6 +1,5 @@
 //12adi45@gmail.com
 
-
 #include "AutoDemoWindow.h"
 #include "MainWindow.h"
 #include "../Roles/Baron.h"
@@ -10,12 +9,12 @@
 #include <QFont>
 #include <random>
 
-/*!
-  * @brief בנאי — בונה את חלון המשחק האוטומטי, יוצר את כל רכיבי הממשק ומאתחל את המשחק.
-  * @param players רשימת שחקנים (shared_ptr) שמועברים למשחק.
-  * @param showDetailedActions האם להציג את הפעולות בפירוט (מגדיר את אופן הדיווח ביומן).
-  * @param parent מצביע ל־QWidget האב (ברירת מחדל nullptr).
-  */
+/**
+ * @brief בנאי - יוצר חלון דמו עם רשימת שחקנים וממשק בקרה
+ * @param inputPlayers רשימת השחקנים למשחק
+ * @param showDetailedActions האם להציג פעולות מפורטות ביומן
+ * @param parent ווידג'ט אב
+ */
 AutoDemoWindow::AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& inputPlayers,
                                bool showDetailedActions, QWidget *parent)
     : QWidget(parent), players(inputPlayers), showDetailedActions(showDetailedActions),
@@ -34,9 +33,8 @@ AutoDemoWindow::AutoDemoWindow(const std::vector<std::shared_ptr<Player>>& input
     demoTimer->setInterval(3000); // 3 seconds default
 }
 
-/*!
- * בונה את כל הממשק הגרפי של החלון:
- * כפתורי חזרה, כותרת, תצוגת שחקנים, בקרות משחק, יומן, סטטוס, ועוד.
+/**
+ * @brief בונה את כל רכיבי ממשק המשתמש
  */
 void AutoDemoWindow::setupUI() {
     // הגדרת כותרת וכפתור חזרה לתפריט הראשי
@@ -107,9 +105,8 @@ void AutoDemoWindow::setupUI() {
     mainLayout->addLayout(statusLayout);
 }
 
-/*!
- * בונה את תצוגת קלפי השחקנים (כרטיסים עם שם, תפקיד, מטבעות, סטטוס).
- * התצוגה מוצגת בראשית המסך וממופה לשמות השחקנים.
+/**
+ * @brief יוצר תצוגת קלפי השחקנים
  */
 void AutoDemoWindow::setupPlayerDisplay() {
     QLabel *playersLabel = new QLabel("👥 שחקנים:", this);
@@ -172,9 +169,8 @@ void AutoDemoWindow::setupPlayerDisplay() {
     mainLayout->addWidget(actionResultLabel);
 }
 
-
-/*!
- * בונה את כל בקרות המשחק (כפתורי שליטה, סליידר מהירות וכו'), מחבר את כל הסיגנלים, ומציב אותם בממשק.
+/**
+ * @brief יוצר את פאנל כפתורי הבקרה
  */
 void AutoDemoWindow::setupControls() {
     // קופסת בקרה עם כותרת
@@ -225,8 +221,8 @@ void AutoDemoWindow::setupControls() {
     connect(speedSlider, &QSlider::valueChanged, this, &AutoDemoWindow::adjustSpeed);
 }
 
-/*!
- * בונה את יומן הפעולות (Action Log) של המשחק – תיבה שמציגה לכל אורך המשחק את כל מה שקורה.
+/**
+ * @brief יוצר את תיבת יומן הפעולות
  */
 void AutoDemoWindow::setupActionLog() {
     // כותרת ליומן
@@ -249,9 +245,8 @@ void AutoDemoWindow::setupActionLog() {
     mainLayout->addWidget(actionLog);
 }
 
-/*!
- * בונה את "בית הקברות" – רשימת שחקנים שהודחו מהמשחק (QDockWidget).
- * בפועל, כרגע רק נבנה ומוסתר (לא משולב בדוק אמיתי).
+/**
+ * @brief יוצר את רשימת השחקנים המודחים
  */
 void AutoDemoWindow::setupGraveyard() {
     graveyardDock = new QDockWidget("🪦 שחקנים שהודחו", this);
@@ -265,13 +260,10 @@ void AutoDemoWindow::setupGraveyard() {
     graveyardDock->setMinimumWidth(150);
     graveyardDock->setMaximumWidth(200);
     graveyardDock->hide(); // מוסתר כברירת מחדל
-
-    // הערה: בד"כ מחברים את זה לחלון ראשי עם DOCKS אמיתיים (פה זה יופיע ביומן)
 }
 
-
-/*!
- * אתחול אובייקט המשחק (Game), הוספת שחקנים, חיבור סיגנלים ועדכון ראשוני של התצוגות.
+/**
+ * @brief מאתחל את אובייקט המשחק ומחבר סיגנלים
  */
 void AutoDemoWindow::setupGame() {
     game = std::make_unique<Game>(this); // יצירת מופע משחק (QObject - יש צורך ב-parent)
@@ -289,9 +281,8 @@ void AutoDemoWindow::setupGame() {
     updateGameStatus();    // עדכון סטטוס
 }
 
-/*!
- * מעדכנת את התצוגה הגרפית של כל שחקן: שם, תפקיד, מטבעות, סטטוס, צבע.
- * מפעילה גם הדגשה לשחקן הנוכחי.
+/**
+ * @brief מעדכן את תצוגת כל השחקנים
  */
 void AutoDemoWindow::updatePlayerDisplay() {
     for (const auto& player : players) {
@@ -331,14 +322,10 @@ void AutoDemoWindow::updatePlayerDisplay() {
     highlightCurrentPlayer(); // הדגשת מי שבתורו
 }
 
-
-/*!
- * מדגישה גרפית את השחקן שבתורו (רק אחד בכל רגע), ע"י עיצוב מסגרת/רקע ייחודיים.
- * אם המשחק נגמר/לא התחיל – הפונקציה לא עושה כלום.
+/**
+ * @brief מדגיש את השחקן שבתורו
  */
 void AutoDemoWindow::highlightCurrentPlayer() {
-    // Reset לכל הקלפים (הסרת הדגשה) – כבר מטופל ב־updatePlayerDisplay
-
     try {
         Player& currentPlayer = game->getCurrentPlayer();
         QString currentName = QString::fromStdString(currentPlayer.getName());
@@ -366,10 +353,8 @@ void AutoDemoWindow::highlightCurrentPlayer() {
     }
 }
 
-
-/*!
- * מעדכנת את סטטוס המשחק (רץ/מושהה/עצור/הסתיים) ואת התור הנוכחי (כולל שם שחקן, תור).
- * מחליפה טקסט בלייבלים ומאפשרת/משביתה כפתורים בהתאם למצב.
+/**
+ * @brief מעדכן את תוויות הסטטוס והתור
  */
 void AutoDemoWindow::updateGameStatus() {
     QString status = "📊 סטטוס: ";
@@ -430,11 +415,8 @@ void AutoDemoWindow::updateGameStatus() {
     if (turnLabel) turnLabel->setText(turnText);
 }
 
-
-/*!
- * רושמת הודעה ליומן הפעולות (actionLog) – כולל חותמת זמן, עיצוב צבעוני, וגלילה אוטומטית לתחתית.
- * @param message – ההודעה להצגה ביומן.
- * @param color – צבע ההודעה (ברירת מחדל: אפור בהיר).
+/**
+ * @brief מוסיף הודעה ליומן עם צבע וחותמת זמן
  */
 void AutoDemoWindow::logAction(const QString &message, const QString &color) {
     // הפקת חותמת זמן לשורה (שעה:דקה:שנייה)
@@ -452,10 +434,8 @@ void AutoDemoWindow::logAction(const QString &message, const QString &color) {
     scrollBar->setValue(scrollBar->maximum());
 }
 
-
-/*!
- * מתחיל משחק אוטומטי חדש או ממשיך משחק מושהה/מסתיים.
- * מאפס את הצעדים והשחקנים, רושם את מצב הפתיחה ביומן, ומפעיל את הדמו.
+/**
+ * @brief מתחיל או ממשיך את הדמו האוטומטי
  */
 void AutoDemoWindow::startDemo() {
     // אם המשחק לא התחיל/הסתיים – יש לאפס הכל
@@ -487,9 +467,8 @@ void AutoDemoWindow::startDemo() {
     updatePlayerDisplay();
 }
 
-
-/*!
- * משהה את הדמו (אם הוא רץ), עוצר את הטיימר, ורושם הודעה ביומן.
+/**
+ * @brief משהה את הדמו הרץ
  */
 void AutoDemoWindow::pauseDemo() {
     if (currentState == RUNNING) {
@@ -500,9 +479,8 @@ void AutoDemoWindow::pauseDemo() {
     }
 }
 
-
-/*!
- * עוצר לחלוטין את הדמו (לא מאפס צעדים/שחקנים) ועובר למצב עצור.
+/**
+ * @brief עוצר את הדמו ומחזיר למצב התחלתי
  */
 void AutoDemoWindow::stopDemo() {
     currentState = STOPPED;
@@ -511,9 +489,8 @@ void AutoDemoWindow::stopDemo() {
     updateGameStatus();
 }
 
-
-/*!
- * מבצע צעד בודד בדמו (פועל רק אם המשחק לא הסתיים), ע"י קריאה ל־onDemoStep.
+/**
+ * @brief מבצע צעד בודד במשחק (למצב דיבוג)
  */
 void AutoDemoWindow::stepDemo() {
     if (currentState != FINISHED) {
@@ -521,12 +498,8 @@ void AutoDemoWindow::stepDemo() {
     }
 }
 
-
-/*!
- * מבצע שלב אחד בלולאת הדמו:
- * 1. בודק אם המשחק נגמר/עבר את מגבלת התורות – ואם כן מסיים.
- * 2. מבצע מהלך של השחקן הנוכחי (AI).
- * 3. מעדכן סטטוס ותצוגה, מעביר תור, בודק סיום משחק.
+/**
+ * @brief מבצע תור AI אחד ומעדכן את התצוגה
  */
 void AutoDemoWindow::onDemoStep() {
     // סיום לולאה אם הגעת למגבלת תורות או שהמשחק נגמר
@@ -576,9 +549,8 @@ void AutoDemoWindow::onDemoStep() {
     }
 }
 
-/*!
- * מבצע מהלך "AI" של השחקן הנוכחי: בוחר פעולה מתאימה ומדמה את ביצועה,
- * כולל טיפול במצבי קצה (למשל, חובה לבצע coup).
+/**
+ * @brief מבצע מהלך AI לשחקן הנוכחי
  */
 void AutoDemoWindow::performAIAction() {
     try {
@@ -603,11 +575,8 @@ void AutoDemoWindow::performAIAction() {
     }
 }
 
-
-/*!
- * בוחר פעולה רנדומלית אפשרית (בהתאם לכללים) עבור שחקן מסוים.
- * @param player – שחקן (const).
- * @return שם פעולה (מחרוזת).
+/**
+ * @brief בוחר פעולה אקראית חוקית לשחקן
  */
 QString AutoDemoWindow::getRandomAction(const Player& player) {
     std::vector<QString> possibleActions;
@@ -653,11 +622,8 @@ QString AutoDemoWindow::getRandomAction(const Player& player) {
     return possibleActions[dis(rng)];
 }
 
-
-/*!
- * בוחר שחקן יעד רנדומלי (שונה מהשחקן התוקף) מתוך השחקנים הפעילים.
- * @param attacker – שחקן שמבצע את הפעולה.
- * @return מצביע חכם לשחקן יעד.
+/**
+ * @brief בוחר שחקן יעד אקראי מתאים
  */
 std::shared_ptr<Player> AutoDemoWindow::getRandomTarget(const Player& attacker) {
     std::vector<std::shared_ptr<Player>> validTargets;
@@ -676,11 +642,8 @@ std::shared_ptr<Player> AutoDemoWindow::getRandomTarget(const Player& attacker) 
     return validTargets[dis(rng)];
 }
 
-/*!
- * @brief מדמה ביצוע פעולה עבור שחקן מסוים (כולל טיפול בבלוקים, עדכון סטטוס והוספה ליומן).
- *        בודק את שם הפעולה, מבצע אותה על ה־Game, מטפל בתוצאה, ומוסיף רשומות ליומן.
- * @param action שם הפעולה לביצוע (gather, tax, bribe וכו')
- * @param player רפרנס לשחקן המבצע
+/**
+ * @brief מבצע פעולה נבחרת עם הדמיית חסימות
  */
 void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& player) {
     // הפקת שם השחקן לצורך הודעות
@@ -689,31 +652,23 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
     try {
         ActionResult result; // תוצאה גנרית מהמשחק (הצלחה/כישלון + הודעה)
 
-        // =====================
         // איסוף (gather)
-        // =====================
         if (action == "gather") {
-            // מבצע את הפעולה על האובייקט Game
             result = game->performGather(player);
-            // עדכון תצוגה: הודעה מעל הלוח
             actionResultLabel->setText("💰 " + playerName + " אוסף משאבים");
             if (result.success) {
                 // מדמה אפשרות לחסימה ע"י שחקן אחר (30% סיכוי)
                 if (std::uniform_int_distribution<int>(1, 10)(rng) <= 3) {
                     logAction("🛡️ הפעולה נחסמה על ידי שחקן אחר!", "#e74c3c");
                 } else {
-                    // אם לא נחסם – מוסיף מטבע לשחקן
                     game->applyGather(player);
                     logAction("✅ " + playerName + " אסף 1 מטבע", "#27ae60");
                 }
             } else {
-                // טיפול בכישלון
                 logAction("❌ " + QString::fromStdString(result.message), "#e74c3c");
             }
         }
-        // =====================
         // גביית מס (tax)
-        // =====================
         else if (action == "tax") {
             result = game->performTax(player);
             actionResultLabel->setText("💰💰 " + playerName + " גובה מס");
@@ -731,9 +686,7 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
                 logAction("❌ " + QString::fromStdString(result.message), "#e74c3c");
             }
         }
-        // =====================
         // שוחד (bribe)
-        // =====================
         else if (action == "bribe") {
             result = game->performBribe(player);
             actionResultLabel->setText("💸 " + playerName + " נותן שוחד");
@@ -749,9 +702,7 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
                 logAction("❌ " + QString::fromStdString(result.message), "#e74c3c");
             }
         }
-        // =====================
         // מעצר (arrest)
-        // =====================
         else if (action == "arrest") {
             auto target = getRandomTarget(player); // בוחר יעד אקראי
             if (target && target->getCoins() > 0) { // רק אם היעד פעיל ויש לו מטבעות
@@ -771,9 +722,7 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
                 }
             }
         }
-        // =====================
         // חרם (sanction)
-        // =====================
         else if (action == "sanction") {
             auto target = getRandomTarget(player);
             if (target) {
@@ -783,9 +732,7 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
                 logAction("✅ " + playerName + " הטיל חרם על " + targetName, "#8e44ad");
             }
         }
-        // =====================
         // הפיכה (coup)
-        // =====================
         else if (action == "coup") {
             auto target = getRandomTarget(player);
             if (target) {
@@ -806,9 +753,7 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
                 }
             }
         }
-        // =====================
         // השקעה (invest, ייחודי לברון)
-        // =====================
         else if (action == "invest") {
             result = game->performInvest(player);
             actionResultLabel->setText("📈 " + playerName + " (ברון) משקיע");
@@ -821,7 +766,9 @@ void AutoDemoWindow::simulatePlayerDecision(const QString& action, Player& playe
     }
 }
 
-
+/**
+ * @brief מחזיר צבע ייחודי לכל תפקיד
+ */
 QString AutoDemoWindow::getRoleColor(const QString &roleName) {
     if (roleName == "Governor") return "#3498db";
     else if (roleName == "Baron") return "#9b59b6";
@@ -832,6 +779,9 @@ QString AutoDemoWindow::getRoleColor(const QString &roleName) {
     return "#34495e";
 }
 
+/**
+ * @brief מחזיר מחרוזת מידע מלאה על שחקן
+ */
 QString AutoDemoWindow::getPlayerInfo(const Player &player) {
     QString name = QString::fromStdString(player.getName());
     QString role = QString::fromStdString(player.getRole()->getName());
@@ -841,11 +791,17 @@ QString AutoDemoWindow::getPlayerInfo(const Player &player) {
     return name + " (" + role + ") - " + coins + " מטבעות - " + status;
 }
 
+/**
+ * @brief מוסיף שחקן לרשימת המודחים
+ */
 void AutoDemoWindow::addPlayerToGraveyard(const QString &name, const QString &reason) {
     // For now, just log it since we don't have a proper dock widget setup
     logAction("⚰️ " + name + " נוסף לבית הקברות: " + reason, "#7f8c8d");
 }
 
+/**
+ * @brief משנה את מהירות הדמו לפי ערך הסליידר
+ */
 void AutoDemoWindow::adjustSpeed(int value) {
     // Convert slider value to timer interval
     // Value 1 = 5000ms (slow), Value 10 = 500ms (fast)
@@ -860,6 +816,9 @@ void AutoDemoWindow::adjustSpeed(int value) {
     speedLabel->setText(speedText);
 }
 
+/**
+ * @brief מטפל בסיום המשחק ומציג דיאלוג ניצחון
+ */
 void AutoDemoWindow::onGameEnd(const QString& winnerName) {
     logAction("🏆🏆🏆 המשחק הסתיים! 🏆🏆🏆", "#f1c40f");
     logAction("👑 המנצח: " + winnerName + " 👑", "#e74c3c");
@@ -871,6 +830,9 @@ void AutoDemoWindow::onGameEnd(const QString& winnerName) {
     showGameOverDialog(winnerName);
 }
 
+/**
+ * @brief מטפל בהדחת שחקן ומוסיף אותו לבית הקברות
+ */
 void AutoDemoWindow::onPlayerEliminated(const QString& playerName, const QString& reason) {
     logAction("💀 " + playerName + " הודח מהמשחק!", "#e74c3c");
     logAction("📝 סיבה: " + reason, "#95a5a6");
@@ -878,6 +840,9 @@ void AutoDemoWindow::onPlayerEliminated(const QString& playerName, const QString
     updatePlayerDisplay();
 }
 
+/**
+ * @brief מציג דיאלוג סיום משחק עם אפשרות להתחיל מחדש
+ */
 void AutoDemoWindow::showGameOverDialog(const QString& winner) {
     // Find winner details
     QString winnerRole = "";

@@ -1,3 +1,5 @@
+// 12adi45@gmail.com
+
 #include "AutoPlayerSetupWindow.h"
 #include "MainWindow.h"
 #include <QFont>
@@ -7,6 +9,9 @@
 #include <random>
 #include <algorithm>
 
+/**
+ * @brief בנאי - יוצר חלון הגדרת משחק אוטומטי עם ממשק מלא
+ */
 AutoPlayerSetupWindow::AutoPlayerSetupWindow(QWidget *parent)
     : QWidget(parent)
 {
@@ -15,6 +20,9 @@ AutoPlayerSetupWindow::AutoPlayerSetupWindow(QWidget *parent)
     setupUI();
 }
 
+/**
+ * @brief בונה את כל רכיבי הממשק - כותרת, אפשרויות, שדות שמות וכפתורים
+ */
 void AutoPlayerSetupWindow::setupUI() {
     mainLayout = new QVBoxLayout(this);
 
@@ -136,6 +144,9 @@ void AutoPlayerSetupWindow::setupUI() {
     updateNameFields(playerCountSpin->value());
 }
 
+/**
+ * @brief מעדכן שדות שמות השחקנים בהתאם למספר השחקנים שנבחר
+ */
 void AutoPlayerSetupWindow::updateNameFields(int count) {
     // Clear existing fields
     QLayoutItem *item;
@@ -175,6 +186,9 @@ void AutoPlayerSetupWindow::updateNameFields(int count) {
     }
 }
 
+/**
+ * @brief מייצר שמות רנדומליים מהרשימה הקבועה אם האפשרות מסומנת
+ */
 void AutoPlayerSetupWindow::generateRandomNames() {
     if (!useRandomNamesCheckBox->isChecked()) return;
 
@@ -190,6 +204,9 @@ void AutoPlayerSetupWindow::generateRandomNames() {
     }
 }
 
+/**
+ * @brief יוצר שחקנים עם תפקידים רנדומליים ופולט סיגנל להתחלת משחק
+ */
 void AutoPlayerSetupWindow::startAutoGame() {
     std::vector<std::shared_ptr<Player>> players;
 
@@ -220,6 +237,9 @@ void AutoPlayerSetupWindow::startAutoGame() {
     close();
 }
 
+/**
+ * @brief חוזר לתפריט הראשי וסוגר את החלון הנוכחי
+ */
 void AutoPlayerSetupWindow::goBack() {
     auto *mainMenu = new MainWindow();
     mainMenu->show();
