@@ -128,6 +128,7 @@ class Game : public QObject {
      * מבצע בדיקה האם המשחק נגמר – אם כן, מסמן ויוצר אות מתאים.
      */
     void checkGameOver();
+    void validateBasicAction(const Player& player, const std::string& action);
 
     /**
      * פעולה: איסוף (gather). בודק אם מותר לבצע ומחזיר תוצאה.
